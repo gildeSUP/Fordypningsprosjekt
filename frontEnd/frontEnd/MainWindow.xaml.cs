@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,7 +25,20 @@ namespace frontEnd
         {
             InitializeComponent();
         }
+        private void openFileClick(object sender, RoutedEventArgs e)
+        {
+            // Create an instance of the open file dialog box.
+            OpenFileDialog ofd = new OpenFileDialog();
 
-        
+            ofd.Title = "Open model";
+//            ofd.Filter = "STL files|*.STL";
+            if (ofd.ShowDialog() ==true)
+            {
+                string filename = ofd.FileName.Replace("\\", "/");
+            }
+
+
+        }
+
     }
 }

@@ -17,9 +17,8 @@
             <RowDefinition Height="1*" />
             <RowDefinition Height="1*" />
         </Grid.RowDefinitions>
-
         <GridSplitter Grid.Column="1" Grid.RowSpan="4" Width="3" HorizontalAlignment="Left" Background="Black"/>
-        <Button x:Name="open_file" Content="Open file" Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+        <Button x:Name="open_file" Content="Open file" Click="openFileClick" Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
         
 
 
