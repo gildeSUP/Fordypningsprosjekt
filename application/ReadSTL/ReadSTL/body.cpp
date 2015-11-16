@@ -79,3 +79,8 @@ void read_STL::v3(char* facet)
 	vec.push_back(coords);
 
 }
+vector<vector<double>> read_STL::getVec()
+{
+	return vec;
+}
+
