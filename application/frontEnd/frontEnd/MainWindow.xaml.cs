@@ -43,9 +43,31 @@ namespace frontEnd
                 string filename = ofd.FileName.Replace("\\", "/");
                 openStl(filename);
             }
-
-
         }
+        private void newPathClick(object sender, RoutedEventArgs e)
+        {
+            if (canvas.IsEnabled==false)
+            {
+                pathCoords.Items.Clear();
+                polyline.Points.Clear();
+                canvas.IsEnabled = true;
+                new_path.Content = "End Path";
+            }
+            else
+            {
+                canvas.IsEnabled = false;
+                new_path.Content = "New Path";
+            }
+        }
+        private void canvas_MouseClick(object sender, MouseEventArgs e)
+        {
+            Point p = e.GetPosition(canvas);
+            double x = p.X;
+            double y = p.Y;
+            polyline.Points.Add(p);
+            pathCoords.Items.Add("X: " + x.ToString() + "   y: " + y.ToString());
+        }
+
 
     }
 }
