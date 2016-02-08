@@ -30,7 +30,8 @@ namespace frontEnd
         }
 
         //obsobs: er i millimeter
-        List<Point3D> path = new List<Point3D> { new Point3D ( 1559.03, 160.589, 1274.49 ), new Point3D(1408.93, 8102.45, 1274.49), new Point3D(2001.82, 9093.03, 1274.49 ), new Point3D( 2742.6, 9614.62, 1274.49 ) };
+        //List<Point3D> path = new List<Point3D> { new Point3D ( 1559.03, 160.589, 1274.49 ), new Point3D(1408.93, 8102.45, 1274.49), new Point3D(2001.82, 9093.03, 1274.49 ), new Point3D( 2742.6, 9614.62, 1274.49 ) };
+        List<Point3D> path = new List<Point3D>();
         List<Point3D> newPath = new List<Point3D>();
 
        [DllImport("../../../../CppClassDll/Debug/CppClassDll.dll", CallingConvention = CallingConvention.Cdecl)]
@@ -38,7 +39,6 @@ namespace frontEnd
 
         private void openFileClick(object sender, RoutedEventArgs e)
         {
-            iteratePath(path);
             /*
             // Create an instance of the open file dialog box.
             OpenFileDialog ofd = new OpenFileDialog();
@@ -54,6 +54,20 @@ namespace frontEnd
         }
         private void newPathClick(object sender, RoutedEventArgs e)
         {
+            OpenFileDialog ofd = new OpenFileDialog();
+
+            ofd.Title = "Choose Path";
+            ofd.Filter = "VTK-files|*.vtk";
+            if (ofd.ShowDialog() == true)
+            {
+                string pathName = ofd.FileName.Replace("\\", "/");
+                readPath(pathName);
+            }
+            if (path.Count != 0)
+            {
+                runJob.IsEnabled = true;
+            }
+            /*
             if (canvas.IsEnabled==false)
             {
                 pathCoords.Items.Clear();
@@ -65,8 +79,29 @@ namespace frontEnd
             {
                 canvas.IsEnabled = false;
                 new_path.Content = "New Path";
+            }'*/
+        }
+
+        private void readPath(string pathName)
+        {
+            string[] lines = System.IO.File.ReadAllLines(pathName);
+            int nodeNums = Int32.Parse(lines[4].Split(' ')[1]);
+
+            // Display the file contents by using a foreach loop.
+            for (int i = 5; i < 5 + Math.Ceiling((double)nodeNums / 3.0) ; i++)
+            {
+                
+                String[] coords = lines[i].Trim().Split(' ');
+                for (int j=0; j<coords.Length-2; j+=3)
+                {
+                    Point3D newNode = new Point3D();
+                    newNode = Point3D.Parse(coords[j] + "," + coords[j + 1] + "," + coords[j + 2]);
+                    path.Add(newNode);
+                    pathCoords.Items.Add(coords[j]+ " " + coords[j+1] + " " + coords[j + 2]);
+                }
             }
         }
+
         private void canvas_MouseClick(object sender, MouseEventArgs e)
         {
             Point p = e.GetPosition(canvas);
@@ -82,9 +117,10 @@ namespace frontEnd
             newPath.Add(path[0]);
             foreach (Point3D node in path)
             {
-                pathCoords.Items.Add(node.X + ", " + node.Y + ", " + node.Z);
+                testData.Items.Add("previousNode: " + newPath.Last().X + ", " + newPath.Last().Y + ", " + newPath.Last().Z);
+                testData.Items.Add("nextNode: " + node.X + ", " + node.Y + ", " + node.Z);
                 if (dynamicRelaxation(node)) { 
-                    pathCoords.Items.Add("ok");
+                    testData.Items.Add("dynamic relaxation done for this node");
                     continue;
                 }
                 else
@@ -103,8 +139,8 @@ namespace frontEnd
             Vector3D velocity = new Vector3D(0.0, 0.0, 0.0);
             Vector3D acceleration = new Vector3D(0.0, 0.0, 0.0);
 
-            double KObject = 0.3;
-            double CObject = 0.6; //2*Math.sqrt(m*sum(K))
+            double KObject = 0.05;
+            double CObject = 0.1; //2*Math.sqrt(m*sum(K))
             
             double mass = 2;
             double deltaT = 0.8; //0.1 during clash
@@ -123,8 +159,7 @@ namespace frontEnd
                 velocity += acceleration*deltaT;
                 displacement += velocity * deltaT;
 
-                pathCoords.Items.Add("D: " + displacement.Length);
-                pathCoords.Items.Add("R: " + residualForce.Length);
+                testData.Items.Add("D: " + displacement.Length + "      R: " + residualForce.Length + "      V: " + velocity.Length);
                 
             }
             
@@ -132,6 +167,11 @@ namespace frontEnd
             return true;
         }
 
+        private void runJob_Click(object sender, RoutedEventArgs e)
+        {
+            canvas.IsEnabled = true;
+            iteratePath(path);
+        }
     }
 }
 
