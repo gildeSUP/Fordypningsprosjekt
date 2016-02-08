@@ -22,7 +22,7 @@
         <Button x:Name="open_file" Content="Open file" Click="openFileClick" Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
 
         <Button x:Name="new_path" Content="New Path" Click="newPathClick" Grid.Row="1" Grid.Column="0" VerticalAlignment="Top" HorizontalAlignment="Center"/>
-        <ListBox x:Name="pathCoords" Grid.Column="0" Grid.Row="1" HorizontalAlignment="Center" Height="100" MaxHeight="100"  Width="120" IsEnabled="False"/>
+        <ListBox x:Name="pathCoords" Grid.Column="0" Grid.Row="1" HorizontalAlignment="Center" Height="100" MaxHeight="100"  Width="200"/>
 
         
         
