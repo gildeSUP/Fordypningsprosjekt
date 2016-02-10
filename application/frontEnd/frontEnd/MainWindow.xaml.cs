@@ -139,10 +139,10 @@ namespace frontEnd
             Vector3D velocity = new Vector3D(0.0, 0.0, 0.0);
             Vector3D acceleration = new Vector3D(0.0, 0.0, 0.0);
 
-            double KObject = 0.05;
-            double CObject = 0.1; //2*Math.sqrt(m*sum(K))
+            double KObject = 0.1;
+            double CObject = 0.85; //2*Math.sqrt(m*sum(K))
             
-            double mass = 2;
+            double mass = 5;
             double deltaT = 0.8; //0.1 during clash
             Point3D N = newPath.Last(); //newPath[i]
             displacement.X = N.X - node.X;
@@ -156,14 +156,14 @@ namespace frontEnd
                 residualForce = residualForce*alpha+(1.0-alpha)*(clashForce-KObject*displacement-CObject*velocity);
 
                 acceleration = residualForce/mass;
-                velocity += acceleration*deltaT;
+                velocity = acceleration*deltaT;
                 displacement += velocity * deltaT;
 
                 testData.Items.Add("D: " + displacement.Length + "      R: " + residualForce.Length + "      V: " + velocity.Length);
                 
             }
             
-            newPath.Add(N);
+            newPath.Add(node);
             return true;
         }
 
