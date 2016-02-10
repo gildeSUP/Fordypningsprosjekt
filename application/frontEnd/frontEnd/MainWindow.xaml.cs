@@ -34,6 +34,7 @@ namespace frontEnd
         private List<Point3D> path = new List<Point3D>();
         private validationObject valObj;
 
+        //tests to open stl-files in c++ and use data from it here
        [DllImport("../../../../CppClassDll/Debug/CppClassDll.dll", CallingConvention = CallingConvention.Cdecl)]
         static extern void openStl(string fname);
 
@@ -52,6 +53,8 @@ namespace frontEnd
             }
             */
         }
+
+        //open text file with path
         private void newPathClick(object sender, RoutedEventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog();
@@ -63,11 +66,12 @@ namespace frontEnd
                 string pathName = ofd.FileName.Replace("\\", "/");
                 readPath(pathName);
             }
-            if (path.Count != 0)
+            if (path.Count != 0) //enable simulation button when necessary data acquired
             {
                 runJob.IsEnabled = true;
             }
-            /*
+            /* 
+            //draw path on canvas test
             if (canvas.IsEnabled==false)
             {
                 pathCoords.Items.Clear();
@@ -81,7 +85,7 @@ namespace frontEnd
                 new_path.Content = "New Path";
             }'*/
         }
-
+        //read text file with path and store path in path list
         private void readPath(string pathName)
         {
             string[] lines = System.IO.File.ReadAllLines(pathName);
@@ -102,6 +106,7 @@ namespace frontEnd
             }
         }
 
+        //get position from clicking on canvas testing
         private void canvas_MouseClick(object sender, MouseEventArgs e)
         {
             Point p = e.GetPosition(canvas);
@@ -111,14 +116,18 @@ namespace frontEnd
             pathCoords.Items.Add("X: " + x.ToString() + "   y: " + y.ToString());
         }
 
+        //iterate through path of nodes
         private Boolean iteratePath(List<Point3D> path)
         {
             valObj = new validationObject();
-            valObj.newPath.Add(path[0]);
+            valObj.addNewPath(path[0]);
             foreach (Point3D node in path)
             {
+                //display of test data
                 testData.Items.Add("previousNode: " + valObj.newPath.Last().X + ", " + valObj.newPath.Last().Y + ", " + valObj.newPath.Last().Z);
                 testData.Items.Add("nextNode: " + node.X + ", " + node.Y + ", " + node.Z);
+                
+                //run dynamic relaxation
                 if (dynamicRelaxation(node)) { 
                     testData.Items.Add("dynamic relaxation done for this node");
                     continue;
@@ -129,6 +138,7 @@ namespace frontEnd
             }
             return true;
         }
+
         private Boolean dynamicRelaxation(Point3D node)
         {
             double alpha = 0.1;
@@ -141,19 +151,23 @@ namespace frontEnd
             Vector3D velocity = new Vector3D(0.0, 0.0, 0.0);
             Vector3D acceleration = new Vector3D(0.0, 0.0, 0.0);
 
-            displacement = valObj.newPath.Last() - node;
+            //set displacement between current position and next path position
+            displacement = valObj.getCurrentPossition() - node;
 
             Boolean first = true;
 
             while (first==true || residualForce.Length>10) {
-                first=false;
+                first=false; //check
 
-                residualForce = residualForce*alpha+(1.0-alpha)*(clashForce-valObj.K*valObj.displacement-valObj.C*velocity);
+                residualForce = residualForce*alpha+(1.0-alpha)*(clashForce-valObj.K*displacement-valObj.C*velocity);
+
+                //new acceleration, velocity and the new change of displacement
                 acceleration = residualForce / valObj.mass;
                 velocity = acceleration*deltaT;
-                valObj.displacement += velocity * deltaT;
+                displacement += velocity * deltaT;
 
-                testData.Items.Add("D: " + valObj.displacement.Length + "      R: " + residualForce.Length + "      V: " + velocity.Length);
+                //just to check out the data, should be removed when works fully
+                testData.Items.Add("D: " + displacement.Length + "      R: " + residualForce.Length + "      V: " + velocity.Length);
                 
             }
 
@@ -161,6 +175,7 @@ namespace frontEnd
             return true;
         }
 
+        // action of simulation button
         private void runJob_Click(object sender, RoutedEventArgs e)
         {
             canvas.IsEnabled = true;

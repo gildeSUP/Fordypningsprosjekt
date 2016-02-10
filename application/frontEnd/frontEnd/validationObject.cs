@@ -14,9 +14,7 @@ namespace frontEnd
         public double mass { get; set; }
         public List<Point3D> newPath { get; set; }
 
-
-        public int lol { get; set; }
-
+        //initialize object parameters
         public validationObject()
         {
             K = 0.1;
@@ -24,7 +22,12 @@ namespace frontEnd
             mass = 5;
             newPath = new List<Point3D>();
         }
-        
+
+        public Point3D getCurrentPossition()
+        {
+            return newPath.Last();
+        }
+
         public void addNewPath(Point3D node)
         {
             newPath.Add(node);
