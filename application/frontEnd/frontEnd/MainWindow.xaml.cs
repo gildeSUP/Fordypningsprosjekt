@@ -132,6 +132,8 @@ namespace frontEnd
         private Boolean dynamicRelaxation(Point3D node)
         {
             double alpha = 0.1;
+            double deltaT = 0.8; //0.1 during clash
+
             Vector3D residualForce = new Vector3D(0.0, 0.0, 0.0);
             Vector3D clashForce = new Vector3D(0.0, 0.0, 0.0);
 
@@ -139,26 +141,23 @@ namespace frontEnd
             Vector3D velocity = new Vector3D(0.0, 0.0, 0.0);
             Vector3D acceleration = new Vector3D(0.0, 0.0, 0.0);
 
-            double deltaT = 0.8; //0.1 during clash
-            
-            displacement.X = valObj.getCurrentPossition().X - node.X;
-            displacement.Y = valObj.getCurrentPossition().Y - node.Y;
-            displacement.Z = valObj.getCurrentPossition().Z - node.Z;
+            displacement = valObj.newPath.Last() - node;
+
             Boolean first = true;
 
             while (first==true || residualForce.Length>10) {
                 first=false;
 
-                residualForce = residualForce*alpha+(1.0-alpha)*(clashForce-valObj.K*displacement-valObj.C*velocity);
+                residualForce = residualForce*alpha+(1.0-alpha)*(clashForce-valObj.K*valObj.displacement-valObj.C*velocity);
                 acceleration = residualForce / valObj.mass;
                 velocity = acceleration*deltaT;
-                displacement += velocity * deltaT;
+                valObj.displacement += velocity * deltaT;
 
-                testData.Items.Add("D: " + displacement.Length + "      R: " + residualForce.Length + "      V: " + velocity.Length);
+                testData.Items.Add("D: " + valObj.displacement.Length + "      R: " + residualForce.Length + "      V: " + velocity.Length);
                 
             }
 
-            valObj.newPath.Add(node); //change node to the actuall new position from displacement
+            valObj.addNewPath(node); //change node to the actuall new position from displacement
             return true;
         }
 
