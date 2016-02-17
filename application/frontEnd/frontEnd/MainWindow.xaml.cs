@@ -145,7 +145,9 @@ namespace frontEnd
             double deltaT = 0.8; //0.1 during clash
 
             Vector3D residualForce = new Vector3D(0.0, 0.0, 0.0);
-            Vector3D clashForce = new Vector3D(0.0, 0.0, 0.0);
+            Vector3D clashForce = new Vector3D(0.0, 0.0, 0.0); // External force
+            Vector3D internalForce = new Vector3D(0.0, 0.0, 0.0); //
+            Vector3D dampingForce = new Vector3D(0.0, 0.0, 0.0); //
 
             Vector3D displacement = new Vector3D(0.0, 0.0, 0.0);
             Vector3D velocity = new Vector3D(0.0, 0.0, 0.0);
@@ -156,14 +158,17 @@ namespace frontEnd
 
             Boolean first = true;
 
-            while (first==true || residualForce.Length>10) {
+            while (first==true || residualForce.Length> 1.0e-5) {
                 first=false; //check
 
-                residualForce = residualForce*alpha+(1.0-alpha)*(clashForce-valObj.K*displacement-valObj.C*velocity);
+                internalForce = valObj.K * displacement;
+                dampingForce  = valObj.C * velocity;
+
+                residualForce = clashForce - internalForce - dampingForce;
 
                 //new acceleration, velocity and the new change of displacement
                 acceleration = residualForce / valObj.mass;
-                velocity = acceleration*deltaT;
+                velocity     += acceleration*deltaT;
                 displacement += velocity * deltaT;
 
                 //just to check out the data, should be removed when works fully
