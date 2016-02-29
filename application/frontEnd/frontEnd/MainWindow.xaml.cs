@@ -40,7 +40,8 @@ namespace frontEnd
 
         private void openFileClick(object sender, RoutedEventArgs e)
         {
-            /*
+            
+            
             // Create an instance of the open file dialog box.
             OpenFileDialog ofd = new OpenFileDialog();
 
@@ -49,9 +50,9 @@ namespace frontEnd
             if (ofd.ShowDialog() ==true)
             {
                 string filename = ofd.FileName.Replace("\\", "/");
-                openStl(filename);
+                readSTL model = new readSTL(filename);
             }
-            */
+            
         }
 
         //open text file with path
@@ -141,17 +142,17 @@ namespace frontEnd
 
         private Boolean dynamicRelaxation(Point3D node)
         {
-            double alpha = 0.1;
-            double deltaT = 0.8; //0.1 during clash
+            var alpha = 0.1;
+            var deltaT = 0.8; //0.1 during clash
 
-            Vector3D residualForce = new Vector3D(0.0, 0.0, 0.0);
-            Vector3D clashForce = new Vector3D(0.0, 0.0, 0.0); // External force
-            Vector3D internalForce = new Vector3D(0.0, 0.0, 0.0); //
-            Vector3D dampingForce = new Vector3D(0.0, 0.0, 0.0); //
+            var residualForce = new Vector3D(0.0, 0.0, 0.0);
+            var clashForce = new Vector3D(0.0, 0.0, 0.0); // External force
+            var internalForce = new Vector3D(0.0, 0.0, 0.0); //
+            var dampingForce = new Vector3D(0.0, 0.0, 0.0); //
 
-            Vector3D displacement = new Vector3D(0.0, 0.0, 0.0);
-            Vector3D velocity = new Vector3D(0.0, 0.0, 0.0);
-            Vector3D acceleration = new Vector3D(0.0, 0.0, 0.0);
+            var displacement = new Vector3D(0.0, 0.0, 0.0);
+            var velocity = new Vector3D(0.0, 0.0, 0.0);
+            var acceleration = new Vector3D(0.0, 0.0, 0.0);
 
             //set displacement between current position and next path position
             displacement = valObj.getCurrentPossition() - node;

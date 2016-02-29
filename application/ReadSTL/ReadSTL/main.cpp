@@ -7,4 +7,5 @@ void main()
 	//read_STL open = read_STL(fname);
 	read_STL open(fname);
 	vector<vector<double>> myVec = open.getVec();
+
 }

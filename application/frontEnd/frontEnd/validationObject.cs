@@ -18,8 +18,9 @@ namespace frontEnd
         public validationObject()
         {
             K = 0.1;
-            C = 0.85; //2*Math.sqrt(m*sum(K))
+            
             mass = 5;
+            C = 2 * Math.Sqrt(mass * K);
             newPath = new List<Point3D>();
         }
 
