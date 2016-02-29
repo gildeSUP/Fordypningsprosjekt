@@ -34,10 +34,7 @@ namespace frontEnd
         private List<Point3D> path = new List<Point3D>();
         private validationObject valObj;
 
-        //tests to open stl-files in c++ and use data from it here
-       [DllImport("../../../../CppClassDll/Debug/CppClassDll.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern void openStl(string fname);
-
+        
         private void openFileClick(object sender, RoutedEventArgs e)
         {
             
@@ -51,6 +48,7 @@ namespace frontEnd
             {
                 string filename = ofd.FileName.Replace("\\", "/");
                 readSTL model = new readSTL(filename);
+                
             }
             
         }

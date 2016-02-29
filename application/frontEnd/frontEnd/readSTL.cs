@@ -10,10 +10,11 @@ namespace frontEnd
 {
     class readSTL
     {
-        private List<List<Vector3D>> boundary = new List<List<Vector3D>>();
+        public List<List<Vector3D>> boundary { get; private set; }
+
         public readSTL(string file)
         {
-
+            boundary = new List<List<Vector3D>>();
             BinaryReader myFile = new BinaryReader(File.Open(file, FileMode.Open));
 
 
