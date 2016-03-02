@@ -9,31 +9,35 @@ namespace frontEnd
 {
     class validationObject
     {
-        public double K { get; set; }
-        public double C { get; set; }
-        public double mass { get; set; }
-        public List<Point3D> newPath { get; set; }
+        public Point3D currentPosition { get; private set; }
+        public List<Point3D> trolley { get; private set; }
+        public double width { get; private set; }
+        public double length { get; private set; }
+        public double K { get; private set; }
+        public double C { get;  private set; }
+        public double mass { get; private set; }
+        public List<Point3D> newPath { get; private set; }
 
         //initialize object parameters
-        public validationObject()
+        public validationObject(double width, double length, double mass, Point3D startPos)
         {
+            currentPosition = startPos;
+            this.width = width;
+            this.length = length;
+
             K = 0.1;
-            
-            mass = 5;
+            this.mass = mass;
             C = 2 * Math.Sqrt(mass * K);
+
             newPath = new List<Point3D>();
+            newPath.Add(startPos);
         }
 
-        public Point3D getCurrentPossition()
+
+        public void updateObjectPosition(Vector3D distance)
         {
-            return newPath.Last();
+            currentPosition += distance;
         }
-
-        public void addNewPath(Point3D node)
-        {
-            newPath.Add(node);
-        }
-
             
     }
 }

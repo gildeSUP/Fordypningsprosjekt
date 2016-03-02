@@ -118,16 +118,15 @@ namespace frontEnd
         //iterate through path of nodes
         private Boolean iteratePath(List<Point3D> path)
         {
-            valObj = new validationObject();
-            valObj.addNewPath(path[0]);
-            foreach (Point3D node in path)
+            valObj = new validationObject(1, 2, 5, path[0]);
+            for (var i=1; i<path.Count; i++)
             {
                 //display of test data
-                testData.Items.Add("previousNode: " + valObj.newPath.Last().X + ", " + valObj.newPath.Last().Y + ", " + valObj.newPath.Last().Z);
-                testData.Items.Add("nextNode: " + node.X + ", " + node.Y + ", " + node.Z);
+                testData.Items.Add("previousNode: " + valObj.currentPosition.X + ", " + valObj.currentPosition.Y + ", " + valObj.currentPosition.Z);
+                testData.Items.Add("nextNode: " + path[i].X + ", " + path[i].Y + ", " + path[i].Z);
                 
                 //run dynamic relaxation
-                if (dynamicRelaxation(node)) { 
+                if (dynamicRelaxation(path[i])) { 
                     testData.Items.Add("dynamic relaxation done for this node");
                     continue;
                 }
@@ -138,9 +137,8 @@ namespace frontEnd
             return true;
         }
 
-        private Boolean dynamicRelaxation(Point3D node)
+        private Boolean dynamicRelaxation(Point3D nextNode)
         {
-            var alpha = 0.1;
             var deltaT = 0.8; //0.1 during clash
 
             var residualForce = new Vector3D(0.0, 0.0, 0.0);
@@ -153,7 +151,7 @@ namespace frontEnd
             var acceleration = new Vector3D(0.0, 0.0, 0.0);
 
             //set displacement between current position and next path position
-            displacement = valObj.getCurrentPossition() - node;
+            displacement = valObj.currentPosition - nextNode; //OBS CURRENTPOSITION gir en liten endring i displacement ved 0 crash
 
             Boolean first = true;
 
@@ -170,12 +168,14 @@ namespace frontEnd
                 velocity     += acceleration*deltaT;
                 displacement += velocity * deltaT;
 
+                valObj.updateObjectPosition(velocity * deltaT);
+                
                 //just to check out the data, should be removed when works fully
                 testData.Items.Add("D: " + displacement.Length + "      R: " + residualForce.Length + "      V: " + velocity.Length);
                 
             }
 
-            valObj.addNewPath(node); //change node to the actuall new position from displacement
+            valObj.newPath.Add(nextNode); //change node to the actuall new position from displacement
             return true;
         }
 
