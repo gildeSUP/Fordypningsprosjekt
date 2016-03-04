@@ -118,7 +118,7 @@ namespace frontEnd
         //iterate through path of nodes
         private Boolean iteratePath(List<Point3D> path)
         {
-            valObj = new validationObject(1, 2, 5, path[0]);
+            valObj = new validationObject(1000, 2000, 700, 5, path[0]);
             for (var i=1; i<path.Count; i++)
             {
                 //display of test data
