@@ -124,7 +124,7 @@ namespace frontEnd
                 //display of test data
                 testData.Items.Add("previousNode: " + valObj.currentPosition.X + ", " + valObj.currentPosition.Y + ", " + valObj.currentPosition.Z);
                 testData.Items.Add("nextNode: " + path[i].X + ", " + path[i].Y + ", " + path[i].Z);
-                
+                valObj.rotateTrolley(path[i]);
                 //run dynamic relaxation
                 if (dynamicRelaxation(path[i])) { 
                     testData.Items.Add("dynamic relaxation done for this node");

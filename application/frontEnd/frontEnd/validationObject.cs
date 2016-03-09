@@ -14,7 +14,7 @@ namespace frontEnd
         public double width { get; private set; }
         public double length { get; private set; }
         public double height { get; private set; }
-        public double angleXY { get; private set; }
+        private double angleXY;
         public double angleXZ { get; private set; }
         public double K { get; private set; }
         public double C { get;  private set; }
@@ -25,6 +25,7 @@ namespace frontEnd
         public validationObject(double width, double length, double height, double mass, Point3D startPos)
         {
             angleXY = 0;
+            angleXZ = 0;
             currentPosition = startPos;
             this.width = width;
             this.length = length;
@@ -50,19 +51,32 @@ namespace frontEnd
         public void updateObjectPosition(Vector3D distance)
         {
             currentPosition += distance;
-            for (var i=0; i<8; i++)
+            for (var i = 0; i < trolley.Count(); i++)
             {
                 trolley[i] += distance;
             }
         }
 
         //TODO
-        /*public void rotateTrolley(Point3D nextNode) 
+        public void rotateTrolley(Point3D nextNode) 
         {
-            angleXY = Math.Atan2(nextNode.Y-currentPosition.Y, nextNode.X-currentPosition.X);
-            angleXZ = Math.Atan2(nextNode.Z - currentPosition.Z, nextNode.X - currentPosition.X);
 
-        }*/
+            double nextAngleXY = Math.Atan2(nextNode.Y-currentPosition.Y, nextNode.X-currentPosition.X);
+            double nextAngleXZ = Math.Atan2(nextNode.Z - currentPosition.Z, nextNode.X - currentPosition.X);
+
+            rotatePoints(nextAngleXY - angleXY, nextAngleXZ - angleXZ);
+        }
+        public void rotatePoints(double deltaAngleXY, double deltaAngleXZ)
+        {
+            Transform3DGroup group = new Transform3DGroup();
+            group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), deltaAngleXY)));
+            group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), deltaAngleXZ)));
+
+            for (var i=0; i<trolley.Count(); i++)
+            {
+                trolley[i] = group.Transform(trolley[i]);
+            }
+        }
             
     }
 }
