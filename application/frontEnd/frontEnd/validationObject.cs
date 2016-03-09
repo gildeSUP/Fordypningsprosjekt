@@ -61,7 +61,7 @@ namespace frontEnd
         public void rotateTrolley(Point3D nextNode) 
         {
 
-            double nextAngleXY = Math.Atan2(nextNode.Y-currentPosition.Y, nextNode.X-currentPosition.X);
+            double nextAngleXY = Math.Atan2(nextNode.Y - currentPosition.Y, nextNode.X - currentPosition.X);
             double nextAngleXZ = Math.Atan2(nextNode.Z - currentPosition.Z, nextNode.X - currentPosition.X);
 
             rotatePoints(nextAngleXY - angleXY, nextAngleXZ - angleXZ);
@@ -72,7 +72,7 @@ namespace frontEnd
             group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), deltaAngleXY)));
             group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), deltaAngleXZ)));
 
-            for (var i=0; i<trolley.Count(); i++)
+            for (var i = 0; i < trolley.Count(); i++)
             {
                 trolley[i] = group.Transform(trolley[i]);
             }
