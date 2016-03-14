@@ -64,17 +64,22 @@ namespace frontEnd
             double nextAngleXY = Math.Atan2(nextNode.Y - currentPosition.Y, nextNode.X - currentPosition.X);
             double nextAngleXZ = Math.Atan2(nextNode.Z - currentPosition.Z, nextNode.X - currentPosition.X);
 
-            rotatePoints(nextAngleXY - angleXY, nextAngleXZ - angleXZ);
+            rotatePoints(nextAngleXY, nextAngleXZ);
         }
-        public void rotatePoints(double deltaAngleXY, double deltaAngleXZ)
+        public void rotatePoints(double nextAngleXY, double nextAngleXZ)
         {
-            Transform3DGroup group = new Transform3DGroup();
-            group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), deltaAngleXY)));
-            group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), deltaAngleXZ)));
-
-            for (var i = 0; i < trolley.Count(); i++)
+            if (nextAngleXY - angleXY != 0 && nextAngleXZ - angleXZ != 0)
             {
-                trolley[i] = group.Transform(trolley[i]);
+                Transform3DGroup group = new Transform3DGroup();
+                group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), nextAngleXY - angleXY)));
+                group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), nextAngleXZ - angleXZ)));
+                for (var i = 0; i < trolley.Count(); i++)
+                {
+                    trolley[i] = group.Transform(trolley[i]);
+
+                }
+                angleXY = nextAngleXY;
+                angleXZ = nextAngleXZ;
             }
         }
             

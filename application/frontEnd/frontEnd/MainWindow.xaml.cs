@@ -33,8 +33,9 @@ namespace frontEnd
         //List<Point3D> path = new List<Point3D> { new Point3D ( 1559.03, 160.589, 1274.49 ), new Point3D(1408.93, 8102.45, 1274.49), new Point3D(2001.82, 9093.03, 1274.49 ), new Point3D( 2742.6, 9614.62, 1274.49 ) };
         private List<Point3D> path = new List<Point3D>();
         private validationObject valObj;
+        private readSTL model;
 
-        
+
         private void openFileClick(object sender, RoutedEventArgs e)
         {
             
@@ -47,10 +48,13 @@ namespace frontEnd
             if (ofd.ShowDialog() ==true)
             {
                 string filename = ofd.FileName.Replace("\\", "/");
-                readSTL model = new readSTL(filename);
-                
+                model = new readSTL(filename);
             }
-            
+            if (path.Count != 0 && model != null) //enable simulation button when necessary data acquired
+            {
+                runJob.IsEnabled = true;
+            }
+
         }
 
         //open text file with path
@@ -65,7 +69,7 @@ namespace frontEnd
                 string pathName = ofd.FileName.Replace("\\", "/");
                 readPath(pathName);
             }
-            if (path.Count != 0) //enable simulation button when necessary data acquired
+            if (path.Count != 0 && model != null) //enable simulation button when necessary data acquired
             {
                 runJob.IsEnabled = true;
             }
@@ -105,6 +109,7 @@ namespace frontEnd
             }
         }
 
+        //NOT USED
         //get position from clicking on canvas testing
         private void canvas_MouseClick(object sender, MouseEventArgs e)
         {
