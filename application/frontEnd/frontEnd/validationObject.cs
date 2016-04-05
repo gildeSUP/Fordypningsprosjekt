@@ -20,6 +20,7 @@ namespace frontEnd
         public double C { get;  private set; }
         public double mass { get; private set; }
         public List<Point3D> newPath { get; private set; }
+        public double nextAngleXY { get; private set; }
 
         //initialize object parameters
         public validationObject(double width, double length, double height, double mass, Point3D startPos)
@@ -61,7 +62,7 @@ namespace frontEnd
         public void rotateTrolley(Point3D nextNode) 
         {
 
-            double nextAngleXY = Math.Atan2(nextNode.Y - currentPosition.Y, nextNode.X - currentPosition.X);
+            nextAngleXY = Math.Atan2(nextNode.Y - currentPosition.Y, nextNode.X - currentPosition.X);
             double nextAngleXZ = Math.Atan2(nextNode.Z - currentPosition.Z, nextNode.X - currentPosition.X);
 
             rotatePoints(nextAngleXY, nextAngleXZ);
@@ -72,7 +73,7 @@ namespace frontEnd
             {
                 Transform3DGroup group = new Transform3DGroup();
                 group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), nextAngleXY - angleXY)));
-                group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), nextAngleXZ - angleXZ)));
+                //group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), nextAngleXZ - angleXZ)));
                 for (var i = 0; i < trolley.Count(); i++)
                 {
                     trolley[i] = group.Transform(trolley[i]);
@@ -82,6 +83,7 @@ namespace frontEnd
                 angleXZ = nextAngleXZ;
             }
         }
+        
             
     }
 }

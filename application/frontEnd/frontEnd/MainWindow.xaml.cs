@@ -124,15 +124,18 @@ namespace frontEnd
         private Boolean iteratePath(List<Point3D> path)
         {
             valObj = new validationObject(1000, 2000, 700, 5, path[0]);
+            writeTrolleyFile(0);
             for (var i=1; i<path.Count; i++)
             {
                 //display of test data
                 testData.Items.Add("previousNode: " + valObj.currentPosition.X + ", " + valObj.currentPosition.Y + ", " + valObj.currentPosition.Z);
                 testData.Items.Add("nextNode: " + path[i].X + ", " + path[i].Y + ", " + path[i].Z);
                 valObj.rotateTrolley(path[i]);
+                testData.Items.Add("YOLOYOLO NEW ANGLE IS: " + valObj.nextAngleXY);
                 //run dynamic relaxation
                 if (dynamicRelaxation(path[i])) { 
                     testData.Items.Add("dynamic relaxation done for this node");
+                    writeTrolleyFile(i);
                     continue;
                 }
                 else
@@ -189,6 +192,32 @@ namespace frontEnd
         {
             canvas.IsEnabled = true;
             iteratePath(path);
+        }
+        private void writeTrolleyFile(int i)
+        {
+            String[] startText = { "# vtk DataFile Version 4.0", "vtk output", "ASCII", "DATASET POLYDATA", "POINTS 8 float" };
+            String[] endText = { "POLYGONS 6 30", "4 0 1 3 2 4 2 3 5 4 4 4 5 7 6 4 0 1 7 6 4 0 2 4 6 4 1 3 5 7"};
+            using (System.IO.StreamWriter file =
+                        new System.IO.StreamWriter(@"C:\Users\Christian\Desktop\test\jobb" + i.ToString() + ".vtk"))
+            {
+                foreach (string line in startText)
+                {
+                    file.WriteLine(line);
+
+                }
+                foreach (Point3D trolleyPoint in valObj.trolley)
+                {
+                    file.WriteLine(trolleyPoint.X.ToString().Replace(",", "."));
+                    file.WriteLine(trolleyPoint.Y.ToString().Replace(",", "."));
+                    file.WriteLine(trolleyPoint.Z.ToString().Replace(",", "."));
+                }
+                foreach (string line in endText)
+                {
+                    file.WriteLine(line);
+
+                }
+
+            }
         }
     }
 }
