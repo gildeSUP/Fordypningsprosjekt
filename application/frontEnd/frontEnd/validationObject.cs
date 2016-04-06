@@ -62,26 +62,30 @@ namespace frontEnd
         public void rotateTrolley(Point3D nextNode) 
         {
 
-            nextAngleXY = Math.Atan2(nextNode.Y - currentPosition.Y, nextNode.X - currentPosition.X);
+            nextAngleXY = Math.Atan2(nextNode.Y - currentPosition.Y, nextNode.X - currentPosition.X)*(180/Math.PI);
             double nextAngleXZ = Math.Atan2(nextNode.Z - currentPosition.Z, nextNode.X - currentPosition.X);
 
             rotatePoints(nextAngleXY, nextAngleXZ);
         }
         public void rotatePoints(double nextAngleXY, double nextAngleXZ)
         {
-            if (nextAngleXY - angleXY != 0 && nextAngleXZ - angleXZ != 0)
-            {
-                Transform3DGroup group = new Transform3DGroup();
-                group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), nextAngleXY - angleXY)));
+            //if (nextAngleXY - angleXY != 0 && nextAngleXZ - angleXZ != 0)
+            //{
+                //Transform3DGroup group = new Transform3DGroup();
+                RotateTransform3D myRotateTransform = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), nextAngleXY-angleXY));
+                myRotateTransform.CenterX = currentPosition.X;
+                myRotateTransform.CenterY = currentPosition.Y;
+                myRotateTransform.CenterZ = currentPosition.Z;
+                //group.Children.Add((myRotateTransform);
                 //group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), nextAngleXZ - angleXZ)));
                 for (var i = 0; i < trolley.Count(); i++)
                 {
-                    trolley[i] = group.Transform(trolley[i]);
+                    trolley[i] = myRotateTransform.Transform(trolley[i]);
 
                 }
                 angleXY = nextAngleXY;
                 angleXZ = nextAngleXZ;
-            }
+            //}
         }
         
             

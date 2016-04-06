@@ -124,13 +124,14 @@ namespace frontEnd
         private Boolean iteratePath(List<Point3D> path)
         {
             valObj = new validationObject(1000, 2000, 700, 5, path[0]);
+            valObj.rotateTrolley(path[1]);
             writeTrolleyFile(0);
-            for (var i=1; i<path.Count; i++)
+            for (var i=1; i<path.Count-1; i++)
             {
                 //display of test data
                 testData.Items.Add("previousNode: " + valObj.currentPosition.X + ", " + valObj.currentPosition.Y + ", " + valObj.currentPosition.Z);
                 testData.Items.Add("nextNode: " + path[i].X + ", " + path[i].Y + ", " + path[i].Z);
-                valObj.rotateTrolley(path[i]);
+                valObj.rotateTrolley(path[i+1]);
                 testData.Items.Add("YOLOYOLO NEW ANGLE IS: " + valObj.nextAngleXY);
                 //run dynamic relaxation
                 if (dynamicRelaxation(path[i])) { 
