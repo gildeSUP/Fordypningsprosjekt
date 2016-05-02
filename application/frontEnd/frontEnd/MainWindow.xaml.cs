@@ -41,7 +41,7 @@ namespace frontEnd
             
             
             // Create an instance of the open file dialog box.
-            OpenFileDialog ofd = new OpenFileDialog();
+            var ofd = new OpenFileDialog();
 
             ofd.Title = "Open model";
             ofd.Filter = "STL files|*.STL";
@@ -95,11 +95,11 @@ namespace frontEnd
             int nodeNums = Int32.Parse(lines[4].Split(' ')[1]);
 
             // Display the file contents by using a foreach loop.
-            for (int i = 5; i < 5 + Math.Ceiling((double)nodeNums / 3.0) ; i++)
+            for (var i = 5; i < 5 + Math.Ceiling((double)nodeNums / 3.0) ; i++)
             {
                 
                 String[] coords = lines[i].Trim().Split(' ');
-                for (int j=0; j<coords.Length-2; j+=3)
+                for (var j=0; j<coords.Length-2; j+=3)
                 {
                     Point3D newNode = new Point3D();
                     newNode = Point3D.Parse(coords[j] + "," + coords[j + 1] + "," + coords[j + 2]);
@@ -123,26 +123,25 @@ namespace frontEnd
         //iterate through path of nodes
         private Boolean iteratePath(List<Point3D> path)
         {
-            valObj = new validationObject(1000, 2000, 700, 5, path[0]);
-            valObj.rotateTrolley(path[1]);
-            writeTrolleyFile(0);
-            for (var i=1; i<path.Count-1; i++)
+            valObj = new validationObject(1000, 2000, 700, 5, path[0], path[1]);
+            for (var i=1; i<path.Count; i++)
             {
                 //display of test data
                 testData.Items.Add("previousNode: " + valObj.currentPosition.X + ", " + valObj.currentPosition.Y + ", " + valObj.currentPosition.Z);
                 testData.Items.Add("nextNode: " + path[i].X + ", " + path[i].Y + ", " + path[i].Z);
-                valObj.rotateTrolley(path[i+1]);
-                testData.Items.Add("YOLOYOLO NEW ANGLE IS: " + valObj.nextAngleXY);
+                //valObj.rotateTrolley(path[i]);
+                writeTrolleyFile(i);
+                testData.Items.Add("YOLOYOLO NEW ANGLE IS: X: " + valObj.nextAngleYZ + " Y: "+ valObj.nextAngleXZ + " Z: " + valObj.nextAngleXY);
                 //run dynamic relaxation
                 if (dynamicRelaxation(path[i])) { 
                     testData.Items.Add("dynamic relaxation done for this node");
-                    writeTrolleyFile(i);
                     continue;
                 }
                 else
                     return false;
                 
             }
+            writeTrolleyFile(path.Count);
             return true;
         }
 
@@ -162,7 +161,7 @@ namespace frontEnd
             //set displacement between current position and next path position
             displacement = valObj.currentPosition - nextNode; //OBS CURRENTPOSITION gir en liten endring i displacement ved 0 crash
 
-            Boolean first = true;
+            var first = true;
 
             while (first==true || residualForce.Length> 1.0e-5) {
                 first=false; //check
@@ -177,6 +176,7 @@ namespace frontEnd
                 velocity     += acceleration*deltaT;
                 displacement += velocity * deltaT;
 
+                valObj.rotateTrolley(valObj.currentPosition+velocity*deltaT);
                 valObj.updateObjectPosition(velocity * deltaT);
                 
                 //just to check out the data, should be removed when works fully
@@ -198,26 +198,31 @@ namespace frontEnd
         {
             String[] startText = { "# vtk DataFile Version 4.0", "vtk output", "ASCII", "DATASET POLYDATA", "POINTS 8 float" };
             String[] endText = { "POLYGONS 6 30", "4 0 1 3 2 4 2 3 5 4 4 4 5 7 6 4 0 1 7 6 4 0 2 4 6 4 1 3 5 7"};
+            String[] greenColor = { "CELL_DATA 6", "SCALARS cell_scalars int 1", "LOOKUP_TABLE default", "0 1 2 3 4 5", "LOOKUP_TABLE default 6", "0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0" };
             using (System.IO.StreamWriter file =
                         new System.IO.StreamWriter(@"C:\Users\Christian\Desktop\test\jobb" + i.ToString() + ".vtk"))
             {
-                foreach (string line in startText)
+                foreach (var line in startText)
                 {
                     file.WriteLine(line);
 
                 }
-                foreach (Point3D trolleyPoint in valObj.trolley)
+                foreach (var trolleyPoint in valObj.trolley)
                 {
                     file.WriteLine(trolleyPoint.X.ToString().Replace(",", "."));
                     file.WriteLine(trolleyPoint.Y.ToString().Replace(",", "."));
                     file.WriteLine(trolleyPoint.Z.ToString().Replace(",", "."));
                 }
-                foreach (string line in endText)
+                foreach (var line in endText)
                 {
                     file.WriteLine(line);
 
                 }
+                foreach (var line in greenColor)
+                {
+                    file.WriteLine(line);
 
+                }
             }
         }
     }

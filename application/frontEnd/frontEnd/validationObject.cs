@@ -14,19 +14,23 @@ namespace frontEnd
         public double width { get; private set; }
         public double length { get; private set; }
         public double height { get; private set; }
-        private double angleXY;
+        public double angleXY { get; private set; }
         public double angleXZ { get; private set; }
+        public double angleYZ { get; private set; }
         public double K { get; private set; }
         public double C { get;  private set; }
         public double mass { get; private set; }
         public List<Point3D> newPath { get; private set; }
         public double nextAngleXY { get; private set; }
+        public double nextAngleXZ { get; private set; }
+        public double nextAngleYZ { get; private set; }
 
         //initialize object parameters
-        public validationObject(double width, double length, double height, double mass, Point3D startPos)
+        public validationObject(double width, double length, double height, double mass, Point3D startPos, Point3D RotateToPoint)
         {
             angleXY = 0;
             angleXZ = 0;
+            angleYZ = 0;
             currentPosition = startPos;
             this.width = width;
             this.length = length;
@@ -48,6 +52,8 @@ namespace frontEnd
             trolley.Add(new Point3D(startPos.X - (length / 2), startPos.Y - (width / 2), startPos.Z - (height / 2)));
             trolley.Add(new Point3D(startPos.X - (length / 2), startPos.Y + (width / 2), startPos.Z + (height / 2)));
             trolley.Add(new Point3D(startPos.X - (length / 2), startPos.Y + (width / 2), startPos.Z - (height / 2)));
+
+            rotateTrolley(RotateToPoint);
         }
         public void updateObjectPosition(Vector3D distance)
         {
@@ -62,30 +68,33 @@ namespace frontEnd
         public void rotateTrolley(Point3D nextNode) 
         {
 
-            nextAngleXY = Math.Atan2(nextNode.Y - currentPosition.Y, nextNode.X - currentPosition.X)*(180/Math.PI);
-            double nextAngleXZ = Math.Atan2(nextNode.Z - currentPosition.Z, nextNode.X - currentPosition.X);
+            nextAngleXY = Math.Atan2(nextNode.Y - currentPosition.Y, nextNode.X - currentPosition.X) * (180/Math.PI);
+            nextAngleXZ = Math.Atan2(nextNode.Z - currentPosition.Z, nextNode.X - currentPosition.X) * (180 / Math.PI);
+            nextAngleYZ = Math.Atan2(nextNode.Z - currentPosition.Z, nextNode.Y - currentPosition.Y) * (180 / Math.PI);           
 
-            rotatePoints(nextAngleXY, nextAngleXZ);
+            rotatePoints(nextAngleXY, nextAngleXZ, nextAngleYZ);
         }
-        public void rotatePoints(double nextAngleXY, double nextAngleXZ)
+        public void rotatePoints(double nextAngleXY, double nextAngleXZ, double nextAngleYZ)
         {
-            //if (nextAngleXY - angleXY != 0 && nextAngleXZ - angleXZ != 0)
-            //{
-                //Transform3DGroup group = new Transform3DGroup();
-                RotateTransform3D myRotateTransform = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), nextAngleXY-angleXY));
-                myRotateTransform.CenterX = currentPosition.X;
-                myRotateTransform.CenterY = currentPosition.Y;
-                myRotateTransform.CenterZ = currentPosition.Z;
-                //group.Children.Add((myRotateTransform);
-                //group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), nextAngleXZ - angleXZ)));
+            if (nextAngleXY - angleXY != 0 || nextAngleXZ - angleXZ != 0 || nextAngleYZ - angleYZ != 0)
+            {
+                
+                var group = new Transform3DGroup();
+                var myRotateTransformZ = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), nextAngleXY-angleXY), currentPosition);
+                group.Children.Add((myRotateTransformZ));
+                /*var myRotateTransformY = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 1, 0), nextAngleXZ - angleXZ), currentPosition);
+                group.Children.Add((myRotateTransformY));
+                var myRotateTransformX = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), nextAngleYZ - angleYZ), currentPosition);
+                group.Children.Add((myRotateTransformX));*/
                 for (var i = 0; i < trolley.Count(); i++)
                 {
-                    trolley[i] = myRotateTransform.Transform(trolley[i]);
+                    trolley[i] = group.Transform(trolley[i]);
 
                 }
                 angleXY = nextAngleXY;
                 angleXZ = nextAngleXZ;
-            //}
+                angleYZ = nextAngleYZ;
+            }
         }
         
             
