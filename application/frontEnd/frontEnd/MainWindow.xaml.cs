@@ -34,7 +34,7 @@ namespace frontEnd
         private List<Point3D> path = new List<Point3D>();
         private validationObject valObj;
         private readSTL model;
-
+        private String folderPath;
 
         private void openFileClick(object sender, RoutedEventArgs e)
         {
@@ -184,23 +184,31 @@ namespace frontEnd
                 
             }
 
-            valObj.newPath.Add(nextNode); //change node to the actuall new position from displacement
+            valObj.newPath.Add(valObj.currentPosition); //change node to the actuall new position from displacement
             return true;
         }
 
         // action of simulation button
         private void runJob_Click(object sender, RoutedEventArgs e)
         {
+            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+            saveFileDialog1.Title = "Folder location";
+            saveFileDialog1.ShowDialog();
             canvas.IsEnabled = true;
-            iteratePath(path);
+            if (saveFileDialog1.FileName != "")
+            {
+                folderPath = saveFileDialog1.FileName;
+                iteratePath(path);
+            }
         }
         private void writeTrolleyFile(int i)
         {
             String[] startText = { "# vtk DataFile Version 4.0", "vtk output", "ASCII", "DATASET POLYDATA", "POINTS 8 float" };
             String[] endText = { "POLYGONS 6 30", "4 0 1 3 2 4 2 3 5 4 4 4 5 7 6 4 0 1 7 6 4 0 2 4 6 4 1 3 5 7"};
             String[] greenColor = { "CELL_DATA 6", "SCALARS cell_scalars int 1", "LOOKUP_TABLE default", "0 1 2 3 4 5", "LOOKUP_TABLE default 6", "0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0" };
+            System.IO.Directory.CreateDirectory(folderPath);
             using (System.IO.StreamWriter file =
-                        new System.IO.StreamWriter(@"C:\Users\Christian\Desktop\test\jobb" + i.ToString() + ".vtk"))
+                        new System.IO.StreamWriter(folderPath + @"\jobb" + i.ToString() + ".vtk"))
             {
                 foreach (var line in startText)
                 {

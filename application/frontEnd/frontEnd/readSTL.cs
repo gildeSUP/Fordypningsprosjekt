@@ -17,8 +17,7 @@ namespace frontEnd
             boundary = new List<List<Vector3D>>();
             BinaryReader myFile = new BinaryReader(File.Open(file, FileMode.Open));
 
-
-            var header = new string(myFile.ReadChars(80));
+            myFile.ReadChars(80);
             var triangles = myFile.ReadInt32();
             for (var i = 0; i < triangles; i++)
             {
@@ -32,7 +31,6 @@ namespace frontEnd
                 boundary.Add(triangle);
             }
             myFile.Close();
-            Console.WriteLine(boundary);
         }
     }
 }
