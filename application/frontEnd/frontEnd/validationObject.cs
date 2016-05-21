@@ -11,6 +11,7 @@ namespace frontEnd
     {
         public Point3D currentPosition { get; private set; }
         public List<Point3D> trolley { get; private set; }
+        public List<List<int>> linePoints { get; private set; }//dict with the index to create all lines of the box
         public double width { get; private set; }
         public double length { get; private set; }
         public double height { get; private set; }
@@ -36,9 +37,9 @@ namespace frontEnd
             this.length = length;
             this.height = height;
 
-            K = 0.1;
+            K = 0.1; //stiffness
             this.mass = mass;
-            C = 2 * Math.Sqrt(mass * K);
+            C = 2 * Math.Sqrt(mass * K); //damping coefficient
 
             newPath = new List<Point3D>();
             newPath.Add(startPos);
@@ -52,6 +53,8 @@ namespace frontEnd
             trolley.Add(new Point3D(startPos.X - (length / 2), startPos.Y - (width / 2), startPos.Z - (height / 2)));
             trolley.Add(new Point3D(startPos.X - (length / 2), startPos.Y + (width / 2), startPos.Z + (height / 2)));
             trolley.Add(new Point3D(startPos.X - (length / 2), startPos.Y + (width / 2), startPos.Z - (height / 2)));
+
+            trolleyLines();
 
             rotateTrolley(RotateToPoint);
         }
@@ -96,7 +99,24 @@ namespace frontEnd
                 angleYZ = nextAngleYZ;
             }
         }
-        
-            
+        //index of every line created of the trolleyPoints
+        public void trolleyLines() 
+        {
+            linePoints = new List<List<int>>();
+            linePoints.Add(new List<int> { 0, 1 });
+            linePoints.Add(new List<int> { 0, 2 });
+            linePoints.Add(new List<int> { 0, 6 });
+            linePoints.Add(new List<int> { 1, 3 });
+            linePoints.Add(new List<int> { 1, 7 });
+            linePoints.Add(new List<int> { 2, 3 });
+            linePoints.Add(new List<int> { 4, 2 });
+            linePoints.Add(new List<int> { 4, 5 });
+            linePoints.Add(new List<int> { 4, 6 });
+            linePoints.Add(new List<int> { 5, 3 });
+            linePoints.Add(new List<int> { 5, 7 });
+            linePoints.Add(new List<int> { 6, 7 });
+        }
+
+
     }
 }

@@ -18,17 +18,18 @@ namespace frontEnd
             BinaryReader myFile = new BinaryReader(File.Open(file, FileMode.Open));
 
             myFile.ReadChars(80);
-            var triangles = myFile.ReadInt32();
-            for (var i = 0; i < triangles; i++)
+            var tris = myFile.ReadInt32();
+            for (var i = 0; i < tris; i++)
             {
-                List<Vector3D> triangle = new List<Vector3D>();
+                List<Vector3D> tri = new List<Vector3D>();
                 for (var j = 0; j < 4; j++)
                 {
                     Vector3D vec = new Vector3D(myFile.ReadSingle(), myFile.ReadSingle(), myFile.ReadSingle());
-                    triangle.Add(vec);
+                    tri.Add(vec);
                 }
                 myFile.ReadInt16();
-                boundary.Add(triangle);
+                boundary.Add(tri);
+                //Console.WriteLine(tri[0] + ", " + tri[1] + ", " + tri[2] + ", " + tri[3]);
             }
             myFile.Close();
         }

@@ -15,6 +15,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Media.Media3D;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace frontEnd
 {
@@ -35,6 +37,7 @@ namespace frontEnd
         private validationObject valObj;
         private readSTL model;
         private String folderPath;
+        private int filenum;
 
         private void openFileClick(object sender, RoutedEventArgs e)
         {
@@ -124,14 +127,17 @@ namespace frontEnd
         private Boolean iteratePath(List<Point3D> path)
         {
             valObj = new validationObject(1000, 2000, 700, 5, path[0], path[1]);
+            filenum = 0;
+            writeTrolleyFile(filenum, false);
+            filenum++;
             for (var i=1; i<path.Count; i++)
             {
+                
                 //display of test data
-                testData.Items.Add("previousNode: " + valObj.currentPosition.X + ", " + valObj.currentPosition.Y + ", " + valObj.currentPosition.Z);
-                testData.Items.Add("nextNode: " + path[i].X + ", " + path[i].Y + ", " + path[i].Z);
-                //valObj.rotateTrolley(path[i]);
-                writeTrolleyFile(i);
-                testData.Items.Add("YOLOYOLO NEW ANGLE IS: X: " + valObj.nextAngleYZ + " Y: "+ valObj.nextAngleXZ + " Z: " + valObj.nextAngleXY);
+                //testData.Items.Add("previousNode: " + valObj.currentPosition.X + ", " + valObj.currentPosition.Y + ", " + valObj.currentPosition.Z);
+                //testData.Items.Add("nextNode: " + path[i].X + ", " + path[i].Y + ", " + path[i].Z);
+                valObj.rotateTrolley(path[i]);
+                //testData.Items.Add("YOLOYOLO NEW ANGLE IS: X: " + valObj.nextAngleYZ + " Y: "+ valObj.nextAngleXZ + " Z: " + valObj.nextAngleXY);
                 //run dynamic relaxation
                 if (dynamicRelaxation(path[i])) { 
                     testData.Items.Add("dynamic relaxation done for this node");
@@ -141,16 +147,16 @@ namespace frontEnd
                     return false;
                 
             }
-            writeTrolleyFile(path.Count);
+            
             return true;
         }
-
+            
         private Boolean dynamicRelaxation(Point3D nextNode)
         {
             var deltaT = 0.8; //0.1 during clash
 
             var residualForce = new Vector3D(0.0, 0.0, 0.0);
-            var clashForce = new Vector3D(0.0, 0.0, 0.0); // External force
+            var clashForces = new Vector3D(0.0, 0.0, 0.0); // External force
             var internalForce = new Vector3D(0.0, 0.0, 0.0); //
             var dampingForce = new Vector3D(0.0, 0.0, 0.0); //
 
@@ -165,27 +171,88 @@ namespace frontEnd
 
             while (first==true || residualForce.Length> 1.0e-5) {
                 first=false; //check
-
+                if (clashForce())
+                {
+                    writeTrolleyFile(filenum, true);
+                    filenum++;
+                }
                 internalForce = valObj.K * displacement;
                 dampingForce  = valObj.C * velocity;
 
-                residualForce = clashForce - internalForce - dampingForce;
+                residualForce = clashForces - internalForce - dampingForce;
 
                 //new acceleration, velocity and the new change of displacement
                 acceleration = residualForce / valObj.mass;
                 velocity     += acceleration*deltaT;
                 displacement += velocity * deltaT;
 
-                valObj.rotateTrolley(valObj.currentPosition+velocity*deltaT);
                 valObj.updateObjectPosition(velocity * deltaT);
                 
                 //just to check out the data, should be removed when works fully
-                testData.Items.Add("D: " + displacement.Length + "      R: " + residualForce.Length + "      V: " + velocity.Length);
+                //testData.Items.Add("D: " + displacement.Length + "      R: " + residualForce.Length + "      V: " + velocity.Length);
                 
             }
 
             valObj.newPath.Add(valObj.currentPosition); //change node to the actuall new position from displacement
+            writeTrolleyFile(filenum, false);
+            filenum++;
             return true;
+        }
+        private Boolean boundingBoxCheck(List<Vector3D> tri)
+        {
+            var sortX = valObj.trolley.OrderBy(point => point.X);
+            var sortY = valObj.trolley.OrderBy(point => point.Y);
+            var sortZ = valObj.trolley.OrderBy(point => point.Z);
+
+            return tri[1].X > sortX.Last().X && tri[2].X > sortX.Last().X && tri[3].X > sortX.Last().X
+                    || tri[1].X < sortX.First().X && tri[2].X < sortX.First().X && tri[3].X < sortX.First().X
+                    || tri[1].Y > sortY.Last().Y && tri[2].Y > sortY.Last().Y && tri[3].Y > sortY.Last().Y
+                    || tri[1].Y < sortY.First().Y && tri[2].Y < sortY.First().Y && tri[3].Y < sortY.First().Y
+                    || tri[1].Z > sortZ.Last().Z && tri[2].Z > sortZ.Last().Z && tri[3].Z > sortZ.Last().Z
+                    || tri[1].Z < sortZ.First().Z && tri[2].Z < sortZ.First().Z && tri[3].Z < sortZ.First().Z;
+        }
+        
+        private bool clashForce()
+        {
+            //Vector3D clashForce = new Vector3D();
+
+            int numberOfCrashes = 0;
+            bool crash = false;
+            foreach(List<Vector3D> tri in model.boundary)
+            {
+                if(boundingBoxCheck(tri))
+                {
+                    continue;
+                }
+                else
+                {
+                    foreach(var line in valObj.linePoints)
+                    {
+                        if (Vector3D.DotProduct(tri[0], (valObj.trolley[line[0]] - valObj.trolley[line[1]])) != 0)
+                        {
+                            var A = Matrix<double>.Build.DenseOfArray(new[,] {
+                                {valObj.trolley[line[0]].X - valObj.trolley[line[1]].X, tri[2].X-tri[1].X,tri[3].X-tri[1].X},
+                                {valObj.trolley[line[0]].Y - valObj.trolley[line[1]].Y, tri[2].Y-tri[1].Y,tri[3].Y-tri[1].Y},
+                                {valObj.trolley[line[0]].Z - valObj.trolley[line[1]].Z, tri[2].Z-tri[1].Z,tri[3].Z-tri[1].Z}});
+
+                            var B = Matrix<double>.Build.DenseOfArray(new[,] {
+                                {valObj.trolley[line[0]].X - tri[1].X},
+                                {valObj.trolley[line[0]].Y - tri[1].Y},
+                                {valObj.trolley[line[0]].X - tri[1].Z}});
+                            var inter = A.Inverse()*B;
+                            if (0 < inter[0, 0] && inter[0,0] < 1 && 0 < inter[1, 0] && inter[1, 0] < 1 &&
+                                0 < inter[2, 0] && inter[2, 0] < 1 && inter[1, 0] + inter[2, 0] <= 1)
+                            {
+                                numberOfCrashes++;
+                                crash = true;
+                            }
+                        }
+                    }
+                        
+                }
+            }
+            testData.Items.Add(numberOfCrashes);
+            return crash;
         }
 
         // action of simulation button
@@ -201,11 +268,14 @@ namespace frontEnd
                 iteratePath(path);
             }
         }
-        private void writeTrolleyFile(int i)
+        private void writeTrolleyFile(int i, bool clash)
         {
             String[] startText = { "# vtk DataFile Version 4.0", "vtk output", "ASCII", "DATASET POLYDATA", "POINTS 8 float" };
-            String[] endText = { "POLYGONS 6 30", "4 0 1 3 2 4 2 3 5 4 4 4 5 7 6 4 0 1 7 6 4 0 2 4 6 4 1 3 5 7"};
-            String[] greenColor = { "CELL_DATA 6", "SCALARS cell_scalars int 1", "LOOKUP_TABLE default", "0 1 2 3 4 5", "LOOKUP_TABLE default 6", "0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0" };
+            String[] endText = { "POLYGONS 6 30", "4 0 1 3 2 4 2 3 5 4 4 4 5 7 6 4 0 1 7 6 4 0 2 4 6 4 1 3 5 7" };
+            String green = "0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0";
+            String red = "1.0 0.0 0.0 1.0 1.0 0.0 0.0 1.0 1.0 0.0 0.0 1.0 1.0 0.0 0.0 1.0 1.0 0.0 0.0 1.0 1.0 0.0 0.0 1.0";
+            String[] color = { "CELL_DATA 6", "SCALARS cell_scalars int 1", "LOOKUP_TABLE default", "0 1 2 3 4 5", "LOOKUP_TABLE default 6" };
+            
             System.IO.Directory.CreateDirectory(folderPath);
             using (System.IO.StreamWriter file =
                         new System.IO.StreamWriter(folderPath + @"\jobb" + i.ToString() + ".vtk"))
@@ -226,12 +296,20 @@ namespace frontEnd
                     file.WriteLine(line);
 
                 }
-                foreach (var line in greenColor)
+                foreach (var line in color)
                 {
                     file.WriteLine(line);
 
                 }
-            }
+                if (clash)
+                {
+                    file.WriteLine(red);
+                }
+                else
+                {
+                    file.WriteLine(green);
+                }
+        }
         }
     }
 }
