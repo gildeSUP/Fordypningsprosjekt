@@ -208,14 +208,13 @@ namespace frontEnd
             var sortY = valObj.trolley.OrderBy(point => point.Y);
             var sortZ = valObj.trolley.OrderBy(point => point.Z);
 
-            /*return tri[1].X > sortX.Last().X && tri[2].X > sortX.Last().X && tri[3].X > sortX.Last().X
+            return tri[1].X > sortX.Last().X && tri[2].X > sortX.Last().X && tri[3].X > sortX.Last().X
                     || tri[1].X < sortX.First().X && tri[2].X < sortX.First().X && tri[3].X < sortX.First().X
                     || tri[1].Y > sortY.Last().Y && tri[2].Y > sortY.Last().Y && tri[3].Y > sortY.Last().Y
                     || tri[1].Y < sortY.First().Y && tri[2].Y < sortY.First().Y && tri[3].Y < sortY.First().Y
                     || tri[1].Z > sortZ.Last().Z && tri[2].Z > sortZ.Last().Z && tri[3].Z > sortZ.Last().Z
                     || tri[1].Z < sortZ.First().Z && tri[2].Z < sortZ.First().Z && tri[3].Z < sortZ.First().Z;
-                    */
-            return false;
+                    
         }
         
         private bool clashForce()
@@ -249,7 +248,6 @@ namespace frontEnd
                             if (0 < inter[0, 0] && inter[0,0] < 1 && 0 < inter[1, 0] && inter[1, 0] < 1 &&
                                 0 < inter[2, 0] && inter[2, 0] < 1 && inter[1, 0] + inter[2, 0] <= 1)
                             {
-                                testData.Items.Add(inter);
                                 numberOfCrashes++;
                                 crash = true;
                             }
@@ -258,7 +256,8 @@ namespace frontEnd
                         
                 }
             }
-            
+            if(numberOfCrashes!=0)
+                testData.Items.Add(numberOfCrashes);
             return crash;
         }
 
