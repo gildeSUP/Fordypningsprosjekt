@@ -40,6 +40,7 @@ namespace frontEnd
         private int filenum;
         private bool crashing = false;
         bool crashingcheck = false;
+        List<List<Vector3D>> testingOfCrashedWalls=new List<List<Vector3D>>();
 
         private void openFileClick(object sender, RoutedEventArgs e)
         {
@@ -52,8 +53,7 @@ namespace frontEnd
             ofd.Filter = "STL files|*.STL";
             if (ofd.ShowDialog() ==true)
             {
-                string filename = ofd.FileName.Replace("\\", "/");
-                model = new readSTL(filename);
+                model = new readSTL(ofd.FileName.Replace("\\", "/"));
             }
             if (path.Count != 0 && model != null) //enable simulation button when necessary data acquired
             {
@@ -128,22 +128,16 @@ namespace frontEnd
         //iterate through path of nodes
         private Boolean iteratePath(List<Point3D> path)
         {
-            valObj = new validationObject(1400, 2500, 700, 5, path[0], path[1]);
+            valObj = new validationObject(1500, 2500, 700, 5, path[0], path[1]);
             filenum = 0;
             writeTrolleyFile(filenum, false);
             filenum++;
             for (var i=1; i<path.Count; i++)
-            {
-                
-                //display of test data
-                //testData.Items.Add("previousNode: " + valObj.currentPosition.X + ", " + valObj.currentPosition.Y + ", " + valObj.currentPosition.Z);
-                //testData.Items.Add("nextNode: " + path[i].X + ", " + path[i].Y + ", " + path[i].Z);
+            {              
                 valObj.rotateTrolley(path[i]);
-                //testData.Items.Add("YOLOYOLO NEW ANGLE IS: X: " + valObj.nextAngleYZ + " Y: "+ valObj.nextAngleXZ + " Z: " + valObj.nextAngleXY);
-                //run dynamic relaxation
+
                 if (dynamicRelaxation(path[i])) { 
-                    testData.Items.Add("dynamic relaxation done for this node");
-                    continue;
+                    testData.Items.Add("dynamic relaxation done for node: " +i);
                 }
                 else
                     return false;
@@ -178,7 +172,6 @@ namespace frontEnd
                     writeTrolleyFile(filenum, crashingcheck);
                     filenum++;
                     crashing = crashingcheck;
-                    testData.Items.Add(crashingcheck);
                 }
                 internalForce = valObj.K * displacement;
                 dampingForce  = valObj.C * velocity;
@@ -223,7 +216,7 @@ namespace frontEnd
 
             int numberOfCrashes = 0;
             bool crash = false;
-            foreach(List<Vector3D> tri in model.boundary)
+            foreach (List<Vector3D> tri in model.boundary)
             {
                 if(boundingBoxCheck(tri))
                 {
@@ -235,21 +228,30 @@ namespace frontEnd
                     {
                         if (Vector3D.DotProduct(tri[0], (valObj.trolley[line[0]] - valObj.trolley[line[1]])) != 0)
                         {
-                            var A = Matrix<double>.Build.DenseOfArray(new[,] {
-                                {valObj.trolley[line[0]].X - valObj.trolley[line[1]].X, tri[2].X-tri[1].X,tri[3].X-tri[1].X},
-                                {valObj.trolley[line[0]].Y - valObj.trolley[line[1]].Y, tri[2].Y-tri[1].Y,tri[3].Y-tri[1].Y},
-                                {valObj.trolley[line[0]].Z - valObj.trolley[line[1]].Z, tri[2].Z-tri[1].Z,tri[3].Z-tri[1].Z}});
+                            var t1 = Matrix<double>.Build.DenseOfArray(new[,] {
+                                {1, 1, 1, 1 },
+                                {tri[1].X, tri[2].X, tri[3].X, valObj.trolley[line[1]].X},
+                                {tri[1].Y, tri[2].Y, tri[3].Y, valObj.trolley[line[1]].Y},
+                                {tri[1].Z, tri[2].Z, tri[3].Z, valObj.trolley[line[1]].Z}});
+                            var t2 = Matrix<double>.Build.DenseOfArray(new[,] {
+                                {1, 1, 1, 0 },
+                                {tri[1].X, tri[2].X, tri[3].X, valObj.trolley[line[0]].X-valObj.trolley[line[1]].X},
+                                {tri[1].Y, tri[2].Y, tri[3].Y, valObj.trolley[line[0]].Y-valObj.trolley[line[1]].Y},
+                                {tri[1].Z, tri[2].Z, tri[3].Z, valObj.trolley[line[0]].Z-valObj.trolley[line[1]].Z}});
+                            var t = -t1.Determinant() / t2.Determinant();                        
 
-                            var B = Matrix<double>.Build.DenseOfArray(new[,] {
-                                {valObj.trolley[line[0]].X - tri[1].X},
-                                {valObj.trolley[line[0]].Y - tri[1].Y},
-                                {valObj.trolley[line[0]].X - tri[1].Z}});
-                            var inter = A.Inverse()*B;
-                            if (0 < inter[0, 0] && inter[0,0] < 1 && 0 < inter[1, 0] && inter[1, 0] < 1 &&
-                                0 < inter[2, 0] && inter[2, 0] < 1 && inter[1, 0] + inter[2, 0] <= 1)
+                            if (0<t && t<1)
                             {
-                                numberOfCrashes++;
-                                crash = true;
+                                Vector3D intersect = new Vector3D(valObj.trolley[line[1]].X + ((valObj.trolley[line[0]].X) - valObj.trolley[line[1]].X) * t, valObj.trolley[line[1]].Y + ((valObj.trolley[line[0]].Y) - valObj.trolley[line[1]].Y) * t, valObj.trolley[line[1]].Z + ((valObj.trolley[line[0]].Z) - valObj.trolley[line[1]].Z) * t);
+                                if (insideTriangle(intersect, tri))
+                                {
+                                    if (!testingOfCrashedWalls.Contains(tri))
+                                    {
+                                        testingOfCrashedWalls.Add(tri);
+                                    }
+                                    numberOfCrashes++;
+                                    crash = true;
+                                }
                             }
                         }
                     }
@@ -258,7 +260,25 @@ namespace frontEnd
             }
             if(numberOfCrashes!=0)
                 testData.Items.Add(numberOfCrashes);
+            testData.Items.Add("number of walls crashed in until now: " + testingOfCrashedWalls.Count);
             return crash;
+        }
+        private bool insideTriangle(Vector3D intersect, List<Vector3D> tri)
+        {
+            Vector3D v0 = tri[3] - tri[1];
+            Vector3D v1 = tri[2] - tri[1];
+            Vector3D v2 = intersect - tri[1];
+
+            double dot00 = Vector3D.DotProduct(v0, v0);
+            double dot01 = Vector3D.DotProduct(v0, v1);
+            double dot02 = Vector3D.DotProduct(v0, v2);
+            double dot11 = Vector3D.DotProduct(v1, v1);
+            double dot12 = Vector3D.DotProduct(v1, v2);
+
+            double invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+            double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+            double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+            return (u >= 0) && (v >= 0) && (u + v < 1);
         }
 
         // action of simulation button

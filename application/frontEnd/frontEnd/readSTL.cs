@@ -29,7 +29,7 @@ namespace frontEnd
                 }
                 myFile.ReadInt16();
                 boundary.Add(tri);
-                //Console.WriteLine(tri[0] + ", " + tri[1] + ", " + tri[2] + ", " + tri[3]);
+                Console.WriteLine(tri[0] + ", " + tri[1] + ", " + tri[2] + ", " + tri[3]);
             }
             myFile.Close();
         }
