@@ -19,10 +19,19 @@
         </Grid.RowDefinitions>
 
         <GridSplitter Grid.Column="1" Grid.RowSpan="4" Width="3" HorizontalAlignment="Left" Background="Black"/>
-        <Button x:Name="open_file" Content="Open file" Click="openFileClick" Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+        <Button x:Name="open_file" Content="Open file" Click="openFileClick" Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="12,51,88,55" Height="20" Width="54"/>
 
-        <Button x:Name="new_path" Content="New Path" Click="newPathClick" Grid.Row="1" Grid.Column="0" VerticalAlignment="Top" HorizontalAlignment="Center"/>
-        <ListBox x:Name="pathCoords" Grid.Column="0" Grid.Row="1" HorizontalAlignment="Center" Height="100" MaxHeight="100"  Width="200"/>
+        <Button x:Name="new_path" Content="New Path" Click="newPathClick" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="80,51,0,55" Height="20" Width="54"/>
+        <ListBox x:Name="pathCoords" Grid.Column="0" Grid.Row="1" HorizontalAlignment="Center" Height="100" MaxHeight="100" Width="200" RenderTransformOrigin="0.5,0.5">
+            <ListBox.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform/>
+                    <SkewTransform AngleX="-2.246"/>
+                    <RotateTransform/>
+                    <TranslateTransform X="1.961"/>
+                </TransformGroup>
+            </ListBox.RenderTransform>
+        </ListBox>
 
 
 
@@ -31,6 +40,9 @@
             <ListBox x:Name="testData" Height="447" Canvas.Left="49" Canvas.Top="22" Width="537" MaxHeight="500" VerticalAlignment="Center" HorizontalAlignment="Center"/>
         </Canvas>
         <Button x:Name="runJob" Content="Simulate" Margin="0" Grid.Row="3" Width="75" Click="runJob_Click" HorizontalAlignment="Center" VerticalAlignment="Center" IsEnabled="False"/>
+        <TextBox x:Name="length" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" Text="2500" VerticalAlignment="Top" Width="38" Margin="14,17,0,0" Grid.Row="2"/>
+        <TextBox x:Name="width" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" Text="1500" VerticalAlignment="Top" Width="37" Margin="60,17,0,0" Grid.Row="2"/>
+        <TextBox x:Name="height" HorizontalAlignment="Left" Height="23" Margin="103,17,0,0" Grid.Row="2" TextWrapping="Wrap" Text="700" VerticalAlignment="Top" Width="37"/>
 
     </Grid>
 </Window>

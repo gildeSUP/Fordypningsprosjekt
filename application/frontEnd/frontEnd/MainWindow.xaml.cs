@@ -17,6 +17,7 @@ using System.Windows.Shapes;
 using System.Windows.Media.Media3D;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
+using System.IO;
 
 namespace frontEnd
 {
@@ -33,7 +34,7 @@ namespace frontEnd
 
         //obsobs: er i millimeter
         //List<Point3D> path = new List<Point3D> { new Point3D ( 1559.03, 160.589, 1274.49 ), new Point3D(1408.93, 8102.45, 1274.49), new Point3D(2001.82, 9093.03, 1274.49 ), new Point3D( 2742.6, 9614.62, 1274.49 ) };
-        private List<Point3D> path = new List<Point3D>();
+        private readPath path;
         private validationObject valObj;
         private readSTL model;
         private String folderPath;
@@ -55,7 +56,7 @@ namespace frontEnd
             {
                 model = new readSTL(ofd.FileName.Replace("\\", "/"));
             }
-            if (path.Count != 0 && model != null) //enable simulation button when necessary data acquired
+            if (path != null && model != null) //enable simulation button when necessary data acquired
             {
                 runJob.IsEnabled = true;
             }
@@ -71,48 +72,19 @@ namespace frontEnd
             ofd.Filter = "VTK-files|*.vtk";
             if (ofd.ShowDialog() == true)
             {
-                string pathName = ofd.FileName.Replace("\\", "/");
-                readPath(pathName);
+                path = new readPath(ofd.FileName.Replace("\\", "/"));
+                pathCoords.Items.Clear();
+                foreach(Point3D node in path.path)
+                {
+                    pathCoords.Items.Add(node.X + " " + node.Y + " " + node.Z);
+                }
             }
-            if (path.Count != 0 && model != null) //enable simulation button when necessary data acquired
+            if (path != null && model != null) //enable simulation button when necessary data acquired
             {
                 runJob.IsEnabled = true;
             }
-            /* 
-            //draw path on canvas test
-            if (canvas.IsEnabled==false)
-            {
-                pathCoords.Items.Clear();
-                polyline.Points.Clear();
-                canvas.IsEnabled = true;
-                new_path.Content = "End Path";
-            }
-            else
-            {
-                canvas.IsEnabled = false;
-                new_path.Content = "New Path";
-            }'*/
         }
-        //read text file with path and store path in path list
-        private void readPath(string pathName)
-        {
-            string[] lines = System.IO.File.ReadAllLines(pathName);
-            int nodeNums = Int32.Parse(lines[4].Split(' ')[1]);
-
-            // Display the file contents by using a foreach loop.
-            for (var i = 5; i < 5 + Math.Ceiling((double)nodeNums / 3.0) ; i++)
-            {
-                
-                String[] coords = lines[i].Trim().Split(' ');
-                for (var j=0; j<coords.Length-2; j+=3)
-                {
-                    Point3D newNode = new Point3D();
-                    newNode = Point3D.Parse(coords[j] + "," + coords[j + 1] + "," + coords[j + 2]);
-                    path.Add(newNode);
-                    pathCoords.Items.Add(coords[j]+ " " + coords[j+1] + " " + coords[j + 2]);
-                }
-            }
-        }
+        
 
         //NOT USED
         //get position from clicking on canvas testing
@@ -126,17 +98,16 @@ namespace frontEnd
         }
 
         //iterate through path of nodes
-        private Boolean iteratePath(List<Point3D> path)
+        private Boolean iteratePath()
         {
-            valObj = new validationObject(1500, 2500, 700, 5, path[0], path[1]);
             filenum = 0;
             writeTrolleyFile(filenum, false);
             filenum++;
-            for (var i=1; i<path.Count; i++)
+            for (var i=1; i<path.path.Count; i++)
             {              
-                valObj.rotateTrolley(path[i]);
+                valObj.rotateTrolley(path.path[i]);
 
-                if (dynamicRelaxation(path[i])) { 
+                if (dynamicRelaxation(path.path[i])) { 
                     testData.Items.Add("dynamic relaxation done for node: " +i);
                 }
                 else
@@ -291,7 +262,8 @@ namespace frontEnd
             if (saveFileDialog1.FileName != "")
             {
                 folderPath = saveFileDialog1.FileName;
-                iteratePath(path);
+                valObj = new validationObject(double.Parse(length.Text), double.Parse(width.Text), double.Parse(height.Text), path.path[0], path.path[1]);
+                iteratePath();
             }
         }
         private void writeTrolleyFile(int i, bool clash)

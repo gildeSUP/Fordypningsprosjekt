@@ -27,7 +27,7 @@ namespace frontEnd
         public double nextAngleYZ { get; private set; }
 
         //initialize object parameters
-        public validationObject(double width, double length, double height, double mass, Point3D startPos, Point3D RotateToPoint)
+        public validationObject(double length, double width, double height, Point3D startPos, Point3D RotateToPoint)
         {
             angleXY = 0;
             angleXZ = 0;
@@ -38,7 +38,7 @@ namespace frontEnd
             this.height = height;
 
             K = 0.1; //stiffness
-            this.mass = mass;
+            this.mass = 5;
             C = 2 * Math.Sqrt(mass * K); //damping coefficient
 
             newPath = new List<Point3D>();
