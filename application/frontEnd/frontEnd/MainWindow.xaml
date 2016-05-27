@@ -35,7 +35,7 @@
 
 
 
-        <Canvas x:Name="canvas" Grid.Column="1" Grid.RowSpan="4" Background="#00FFFFFF" MouseLeftButtonDown="canvas_MouseClick" IsEnabled="False" RenderTransformOrigin="0.5,0.5" Margin="1,3,-1,-3">
+        <Canvas x:Name="canvas" Grid.Column="1" Grid.RowSpan="4" Background="#00FFFFFF" IsEnabled="False" RenderTransformOrigin="0.5,0.5" Margin="1,3,-1,-3">
             <Polyline x:Name="polyline" Stroke="DarkGreen" StrokeThickness="3"/>
             <ListBox x:Name="testData" Height="447" Canvas.Left="49" Canvas.Top="22" Width="537" MaxHeight="500" VerticalAlignment="Center" HorizontalAlignment="Center"/>
         </Canvas>
@@ -43,6 +43,8 @@
         <TextBox x:Name="length" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" Text="2500" VerticalAlignment="Top" Width="38" Margin="14,17,0,0" Grid.Row="2"/>
         <TextBox x:Name="width" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" Text="1500" VerticalAlignment="Top" Width="37" Margin="60,17,0,0" Grid.Row="2"/>
         <TextBox x:Name="height" HorizontalAlignment="Left" Height="23" Margin="103,17,0,0" Grid.Row="2" TextWrapping="Wrap" Text="700" VerticalAlignment="Top" Width="37"/>
+        <CheckBox x:Name="checkBox1" Content="Validate job" HorizontalAlignment="Left" Margin="21,3,0,0" Grid.Row="3" VerticalAlignment="Top" Width="112"/>
+        <CheckBox x:Name="checkBox2" Content="CheckBox" HorizontalAlignment="Left" Margin="21,28,0,0" Grid.Row="3" VerticalAlignment="Top" Width="112"/>
 
     </Grid>
 </Window>

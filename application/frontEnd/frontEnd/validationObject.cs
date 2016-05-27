@@ -11,6 +11,7 @@ namespace frontEnd
     {
         public Point3D currentPosition { get; private set; }
         public List<Point3D> trolley { get; private set; }
+        public List<Point3D> startTrolley { get; private set; }
         public List<List<int>> linePoints { get; private set; }//dict with the index to create all lines of the box
         public double width { get; private set; }
         public double length { get; private set; }
@@ -22,17 +23,15 @@ namespace frontEnd
         public double C { get;  private set; }
         public double mass { get; private set; }
         public List<Point3D> newPath { get; private set; }
+        public List<Tuple<bool, Point3D>> oldPath { get; private set; }
         public double nextAngleXY { get; private set; }
         public double nextAngleXZ { get; private set; }
         public double nextAngleYZ { get; private set; }
-
+        
         //initialize object parameters
-        public validationObject(double length, double width, double height, Point3D startPos, Point3D RotateToPoint)
+        public validationObject(double length, double width, double height, Point3D startPos, Point3D rotateToPoint)
         {
-            angleXY = 0;
-            angleXZ = 0;
-            angleYZ = 0;
-            currentPosition = startPos;
+
             this.width = width;
             this.length = length;
             this.height = height;
@@ -42,8 +41,21 @@ namespace frontEnd
             C = 2 * Math.Sqrt(mass * K); //damping coefficient
 
             newPath = new List<Point3D>();
+            oldPath = new List<Tuple<bool, Point3D>>();
             newPath.Add(startPos);
+            oldPath.Add(Tuple.Create(false, startPos));
 
+            start(startPos);
+            
+            rotateTrolley(rotateToPoint);
+            trolleyLines();
+        }
+        public void start(Point3D startPos)
+        {
+            angleXY = 0;
+            angleXZ = 0;
+            angleYZ = 0;
+            currentPosition = startPos;
             trolley = new List<Point3D>();
             trolley.Add(new Point3D(startPos.X + (length / 2), startPos.Y + (width / 2), startPos.Z + (height / 2)));
             trolley.Add(new Point3D(startPos.X + (length / 2), startPos.Y + (width / 2), startPos.Z - (height / 2)));
@@ -53,11 +65,8 @@ namespace frontEnd
             trolley.Add(new Point3D(startPos.X - (length / 2), startPos.Y - (width / 2), startPos.Z - (height / 2)));
             trolley.Add(new Point3D(startPos.X - (length / 2), startPos.Y + (width / 2), startPos.Z + (height / 2)));
             trolley.Add(new Point3D(startPos.X - (length / 2), startPos.Y + (width / 2), startPos.Z - (height / 2)));
-
-            trolleyLines();
-
-            rotateTrolley(RotateToPoint);
         }
+
         public void updateObjectPosition(Vector3D distance)
         {
             currentPosition += distance;
