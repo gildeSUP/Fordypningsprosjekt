@@ -145,11 +145,10 @@ namespace frontEnd
             while (first==true || residualForce.Length> 1.0e-5) {
                 first=false; //check
                 crashingcheck = clashForce();
-                if (crashingcheck!=crashing)
-                {
-                    valObj.oldPath.Add(Tuple.Create(crashingcheck, valObj.currentPosition));
-                    crashing = crashingcheck;
-                }
+
+                //only during verification
+                addCrashToPath();
+
                 internalForce = valObj.K * displacement;
                 dampingForce  = valObj.C * velocity;
 
@@ -167,7 +166,15 @@ namespace frontEnd
             valObj.newPath.Add(valObj.currentPosition); //change node to the actuall new position from displacement
             return true;
         }
-
+        private void addCrashToPath()
+        {
+            //only during verification
+            if (crashingcheck != crashing)
+            {
+                valObj.oldPath.Add(Tuple.Create(crashingcheck, valObj.currentPosition));
+                crashing = crashingcheck;
+            }
+        }
         
         private bool clashForce()
         {
