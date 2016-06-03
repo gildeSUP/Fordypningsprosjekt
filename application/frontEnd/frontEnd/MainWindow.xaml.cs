@@ -2,21 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Media.Media3D;
 using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double;
 using System.IO;
 
 namespace frontEnd
@@ -39,8 +27,10 @@ namespace frontEnd
         private readSTL model;
         private String folderPath;
         private bool crashing = false;
-        bool crashingcheck = false;
+        bool crashingCheck = false;
         List<List<Vector3D>> testingOfCrashedWalls=new List<List<Vector3D>>();
+        private bool validate;
+        private double kWall = 0.008;
 
         //open STL-file with model
         private void openFileClick(object sender, RoutedEventArgs e)
@@ -94,14 +84,22 @@ namespace frontEnd
                 if (saveFileDialog1.FileName != "")
                 {
                     folderPath = saveFileDialog1.FileName;
-                    valObj = new validationObject(double.Parse(length.Text), double.Parse(width.Text), double.Parse(height.Text), path.path[0], path.path[1]);
                     if (checkBox1.IsChecked == true)
                     {
+                        valObj = new validationObject(double.Parse(length.Text), double.Parse(width.Text), double.Parse(height.Text), path.path[0], path.path[1]);
+                        validate = true;
                         iteratePath();
-                        writePath(valObj.oldPath);
+                        System.IO.Directory.CreateDirectory(folderPath);
+                        writeFiles(valObj.oldPath);
                     }
                     if (checkBox2.IsChecked == true)
                     {
+                        valObj = new validationObject(double.Parse(length.Text), double.Parse(width.Text), double.Parse(height.Text), path.path[0], path.path[1]);
+                        validate = false;
+                        iteratePath();
+                        System.IO.Directory.CreateDirectory(folderPath);
+                        writeNewPath();
+                        writeFiles(valObj.newPath);
                         //optimize path here
                     }
                 }
@@ -114,19 +112,34 @@ namespace frontEnd
             for (var i=1; i<path.path.Count; i++)
             {              
                 valObj.rotateTrolley(path.path[i]);
-
-                if (dynamicRelaxation(path.path[i])) { 
-                    testData.Items.Add("dynamic relaxation done for node: " +i);
+                if (validate == false)
+                {
+                    Vector3D rotateCrash = clash();
+                    if (rotateCrash.Length != 0)
+                    {
+                        if (!dynamicRelaxation(path.path[i - 1]))
+                        {
+                            return false;
+                        }
+                        else
+                            testData.Items.Add("dynamic relaxation done for rotation: " + (i - 1).ToString());
+                    }
+                    valObj.newPath.Add(Tuple.Create(false, valObj.currentPosition)); //change node to the actuall new position from displacement
+                }
+                if (!dynamicRelaxation(path.path[i])) {
+                    return false;
                 }
                 else
-                    return false;
-                
+                    testData.Items.Add("dynamic relaxation done for node: " + i);
+
             }
+            valObj.newPath.Add(Tuple.Create(false, valObj.currentPosition)); //change node to the actuall new position from displacement
             return true;
         }
             
         private Boolean dynamicRelaxation(Point3D nextNode)
         {
+            int tolerance = 0;
             var deltaT = 0.8; //0.1 during clash
 
             var residualForce = new Vector3D(0.0, 0.0, 0.0);
@@ -143,16 +156,15 @@ namespace frontEnd
 
             var first = true;
             while (first==true || residualForce.Length> 1.0e-5) {
+                tolerance++;
                 first=false; //check
-                crashingcheck = clashForce();
+                clashForces += clash();
 
-                //only during verification
-                addCrashToPath();
 
                 internalForce = valObj.K * displacement;
                 dampingForce  = valObj.C * velocity;
 
-                residualForce = clashForces - internalForce - dampingForce;
+                residualForce = -clashForces - internalForce - dampingForce;
 
                 //new acceleration, velocity and the new change of displacement
                 acceleration = residualForce / valObj.mass;
@@ -160,31 +172,37 @@ namespace frontEnd
                 displacement += velocity * deltaT;
 
                 valObj.updateObjectPosition(velocity * deltaT);
-
+                if (tolerance == 500)
+                {
+                    testData.Items.Add("impossible crash node " + nextNode);
+                    return false;
+                }
             }
-            valObj.oldPath.Add(Tuple.Create(crashingcheck, valObj.currentPosition));
-            valObj.newPath.Add(valObj.currentPosition); //change node to the actuall new position from displacement
+            valObj.oldPath.Add(Tuple.Create(crashingCheck, valObj.currentPosition));
             return true;
         }
-        private void addCrashToPath()
+
+        private void addCrashToPath(bool boo)
         {
-            //only during verification
-            if (crashingcheck != crashing)
+            crashingCheck = boo;
+            if (crashingCheck != crashing)
             {
-                valObj.oldPath.Add(Tuple.Create(crashingcheck, valObj.currentPosition));
-                crashing = crashingcheck;
+                valObj.oldPath.Add(Tuple.Create(crashingCheck, valObj.currentPosition));
+                crashing = crashingCheck;
             }
         }
         
-        private bool clashForce()
+        private Vector3D clash()
         {
-            //Vector3D clashForce = new Vector3D();
-
-            //int numberOfCrashes = 0;
-            //bool crash = false;
-            foreach (List<Vector3D> tri in model.boundary)
+            Vector3D forces = new Vector3D(0,0,0);
+            int numberOfCrashes = 0;
+            List<Tuple<List<int>, Point3D>> leftovers = new List<Tuple<List<int>, Point3D>>();
+            foreach (Tuple<Vector3D, List<Point3D>> tri in model.boundary)
             {
-                if(boundingBoxCheck(tri))
+                List<List<int>> intersectedLines = new List<List<int>>();
+                List<Point3D> intersectionsPoints = new List<Point3D>();
+                numberOfCrashes = 0;
+                if (boundingBoxCheck(tri.Item2))
                 {
                     continue;
                 }
@@ -192,64 +210,116 @@ namespace frontEnd
                 {
                     foreach(var line in valObj.linePoints)
                     {
-                        if (Vector3D.DotProduct(tri[0], (valObj.trolley[line[0]] - valObj.trolley[line[1]])) != 0)
+                        if (Vector3D.DotProduct(tri.Item1, (valObj.trolley[line[0]] - valObj.trolley[line[1]])) != 0)
                         {
                             var t1 = Matrix<double>.Build.DenseOfArray(new[,] {
                                 {1, 1, 1, 1 },
-                                {tri[1].X, tri[2].X, tri[3].X, valObj.trolley[line[1]].X},
-                                {tri[1].Y, tri[2].Y, tri[3].Y, valObj.trolley[line[1]].Y},
-                                {tri[1].Z, tri[2].Z, tri[3].Z, valObj.trolley[line[1]].Z}});
+                                {tri.Item2[0].X, tri.Item2[1].X, tri.Item2[2].X, valObj.trolley[line[1]].X},
+                                {tri.Item2[0].Y, tri.Item2[1].Y, tri.Item2[2].Y, valObj.trolley[line[1]].Y},
+                                {tri.Item2[0].Z, tri.Item2[1].Z, tri.Item2[2].Z, valObj.trolley[line[1]].Z}});
                             var t2 = Matrix<double>.Build.DenseOfArray(new[,] {
                                 {1, 1, 1, 0 },
-                                {tri[1].X, tri[2].X, tri[3].X, valObj.trolley[line[0]].X-valObj.trolley[line[1]].X},
-                                {tri[1].Y, tri[2].Y, tri[3].Y, valObj.trolley[line[0]].Y-valObj.trolley[line[1]].Y},
-                                {tri[1].Z, tri[2].Z, tri[3].Z, valObj.trolley[line[0]].Z-valObj.trolley[line[1]].Z}});
+                                {tri.Item2[0].X, tri.Item2[1].X, tri.Item2[2].X, valObj.trolley[line[0]].X-valObj.trolley[line[1]].X},
+                                {tri.Item2[0].Y, tri.Item2[1].Y, tri.Item2[2].Y, valObj.trolley[line[0]].Y-valObj.trolley[line[1]].Y},
+                                {tri.Item2[0].Z, tri.Item2[1].Z, tri.Item2[2].Z, valObj.trolley[line[0]].Z-valObj.trolley[line[1]].Z}});
                             var t = -t1.Determinant() / t2.Determinant();                        
 
                             if (0<t && t<1)
                             {
-                                Vector3D intersect = new Vector3D(valObj.trolley[line[1]].X + ((valObj.trolley[line[0]].X) - valObj.trolley[line[1]].X) * t, valObj.trolley[line[1]].Y + ((valObj.trolley[line[0]].Y) - valObj.trolley[line[1]].Y) * t, valObj.trolley[line[1]].Z + ((valObj.trolley[line[0]].Z) - valObj.trolley[line[1]].Z) * t);
-                                if (insideTriangle(intersect, tri))
+                                var intersect = new Point3D(valObj.trolley[line[1]].X + ((valObj.trolley[line[0]].X) - valObj.trolley[line[1]].X) * t, valObj.trolley[line[1]].Y + ((valObj.trolley[line[0]].Y) - valObj.trolley[line[1]].Y) * t, valObj.trolley[line[1]].Z + ((valObj.trolley[line[0]].Z) - valObj.trolley[line[1]].Z) * t);
+                                if (insideTriangle(intersect, tri.Item2))
                                 {
-                                    /*if (!testingOfCrashedWalls.Contains(tri))
+                                    if (validate == true)
                                     {
-                                        testingOfCrashedWalls.Add(tri);
+                                        addCrashToPath(true);
+                                        return forces;
                                     }
-                                    numberOfCrashes++;*/
-                                    return true;
+                                    else if (validate == false)
+                                    {
+                                        intersectedLines.Add(line);
+                                        intersectionsPoints.Add(intersect);
+                                        numberOfCrashes++;
+                                    }
                                 }
                             }
                         }
                     }
                         
                 }
+                if (validate == false)
+                {
+                    foreach (var point in intersectedLines.Zip(intersectionsPoints, Tuple.Create))
+                    {
+                        var l = (valObj.trolley[point.Item1[0]]-point.Item2).Length;
+                        var m = (valObj.trolley[point.Item1[1]] - point.Item2).Length;
+                        if (l < m)
+                        {
+                            var distance = valObj.trolley[point.Item1[0]] - point.Item2;
+                            if (distance.Length == Vector3D.DotProduct(distance, tri.Item1)){
+                                forces += distance * kWall;
+                            }
+                        }
+                    }
+                    var nodeOutside = connectedLines(intersectedLines);
+                    if (nodeOutside != -1)
+                    {
+                        var distance = Vector3D.DotProduct(tri.Item1, (valObj.trolley[nodeOutside] - tri.Item2[0]));
+                        forces += new Vector3D(tri.Item1.X * distance, tri.Item1.Y * distance, tri.Item1.Z * distance) * kWall;
+                        testData.Items.Add(distance);
+                    }
+                    testData.Items.Add("line intersections for 1 plane is: " + numberOfCrashes);
+                    foreach(var f in intersectedLines.Zip(intersectionsPoints, Tuple.Create))
+                    {
+                        if (!f.Item1.Contains(nodeOutside))
+                        {
+                            leftovers.Add(f);
+                        }
+                    }
+                }
+                
             }
-            //if(numberOfCrashes!=0)
-            //    testData.Items.Add(numberOfCrashes);
-            //testData.Items.Add("number of walls crashed in until now: " + testingOfCrashedWalls.Count);
-            return false;
+            if (validate == true)
+            {
+                addCrashToPath(false);
+                return forces;
+            }
+            return forces;
+        }
+        private int connectedLines(List<List<int>> intersectedLines)
+        {
+            foreach (List<int> line1 in intersectedLines)
+            {
+                foreach (List<int> line2 in intersectedLines)
+                {
+                    if (!line1.Equals(line2) && line1.Intersect(line2).Any())
+                    {
+                        return line1.Intersect(line2).ToList()[0];
+                    }
+                }
+            }
+            return -1;
         }
 
-        private Boolean boundingBoxCheck(List<Vector3D> tri)
+        private Boolean boundingBoxCheck(List<Point3D> tri)
         {
             var sortX = valObj.trolley.OrderBy(point => point.X);
             var sortY = valObj.trolley.OrderBy(point => point.Y);
             var sortZ = valObj.trolley.OrderBy(point => point.Z);
 
-            return tri[1].X > sortX.Last().X && tri[2].X > sortX.Last().X && tri[3].X > sortX.Last().X
-                    || tri[1].X < sortX.First().X && tri[2].X < sortX.First().X && tri[3].X < sortX.First().X
-                    || tri[1].Y > sortY.Last().Y && tri[2].Y > sortY.Last().Y && tri[3].Y > sortY.Last().Y
-                    || tri[1].Y < sortY.First().Y && tri[2].Y < sortY.First().Y && tri[3].Y < sortY.First().Y
-                    || tri[1].Z > sortZ.Last().Z && tri[2].Z > sortZ.Last().Z && tri[3].Z > sortZ.Last().Z
-                    || tri[1].Z < sortZ.First().Z && tri[2].Z < sortZ.First().Z && tri[3].Z < sortZ.First().Z;
+            return tri[0].X > sortX.Last().X && tri[1].X > sortX.Last().X && tri[2].X > sortX.Last().X
+                    || tri[0].X < sortX.First().X && tri[1].X < sortX.First().X && tri[2].X < sortX.First().X
+                    || tri[0].Y > sortY.Last().Y && tri[1].Y > sortY.Last().Y && tri[2].Y > sortY.Last().Y
+                    || tri[0].Y < sortY.First().Y && tri[1].Y < sortY.First().Y && tri[2].Y < sortY.First().Y
+                    || tri[0].Z > sortZ.Last().Z && tri[1].Z > sortZ.Last().Z && tri[2].Z > sortZ.Last().Z
+                    || tri[0].Z < sortZ.First().Z && tri[1].Z < sortZ.First().Z && tri[2].Z < sortZ.First().Z;
 
         }
 
-        private bool insideTriangle(Vector3D intersect, List<Vector3D> tri)
+        private bool insideTriangle(Point3D intersect, List<Point3D> tri)
         {
-            Vector3D v0 = tri[3] - tri[1];
-            Vector3D v1 = tri[2] - tri[1];
-            Vector3D v2 = intersect - tri[1];
+            Vector3D v0 = tri[2] - tri[0];
+            Vector3D v1 = tri[1] - tri[0];
+            Vector3D v2 = intersect - tri[0];
 
             double dot00 = Vector3D.DotProduct(v0, v0);
             double dot01 = Vector3D.DotProduct(v0, v1);
@@ -266,10 +336,9 @@ namespace frontEnd
         
 
 
-        private void writePath(List<Tuple<bool, Point3D>> writePath)
+        private void writeFiles(List<Tuple<bool, Point3D>> writePath)
         {
             int filenum=0;
-            System.IO.Directory.CreateDirectory(folderPath);
             valObj.start(writePath[0].Item2);
             valObj.rotateTrolley(writePath[1].Item2);
 
@@ -290,17 +359,52 @@ namespace frontEnd
             writeTrolleyFile(filenum, writePath.Last().Item1);
             filenum++;
         }
+        private void writeNewPath()
+        {
+            String[] startText = {"# vtk DataFile Version 4.0", "vtk output", "ASCII", "DATASET POLYDATA", "POINTS "+ valObj.newPath.Count + " double"};
+            String endText = "LINES 1 " + (valObj.newPath.Count+1).ToString();
+            using (StreamWriter file =
+                        new StreamWriter(folderPath + @"\new path.vtk"))
+            {
+                foreach (var line in startText)
+                {
+                    file.WriteLine(line);
+
+                }
+                foreach(var node in valObj.newPath)
+                {
+                    file.WriteLine(node.Item2.X.ToString().Replace(",", "."));
+                    file.WriteLine(node.Item2.Y.ToString().Replace(",", "."));
+                    file.WriteLine(node.Item2.Z.ToString().Replace(",", "."));
+                }
+                file.WriteLine(endText);
+                file.WriteLine(valObj.newPath.Count);
+                
+                for(var i=0; i<valObj.newPath.Count; i++)
+                {
+                    file.WriteLine(i);
+                }
+            }
+            }
         private void writeTrolleyFile(int i, bool clash)
         {
+            string nameFile;
             String[] startText = { "# vtk DataFile Version 4.0", "vtk output", "ASCII", "DATASET POLYDATA", "POINTS 8 float" };
             String[] endText = { "POLYGONS 6 30", "4 0 1 3 2 4 2 3 5 4 4 4 5 7 6 4 0 1 7 6 4 0 2 4 6 4 1 3 5 7" };
             String[] color = { "CELL_DATA 6", "SCALARS cell_scalars int 1", "LOOKUP_TABLE default", "0 1 2 3 4 5", "LOOKUP_TABLE default 6" };
             String green = "0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0";
             String red = "1.0 0.0 0.0 1.0 1.0 0.0 0.0 1.0 1.0 0.0 0.0 1.0 1.0 0.0 0.0 1.0 1.0 0.0 0.0 1.0 1.0 0.0 0.0 1.0";
+            if (validate == true)
+            {
+                nameFile = "validate";
+            }
+            else
+            {
+                nameFile = "optimize";
+            }
             
-            
-            using (System.IO.StreamWriter file =
-                        new System.IO.StreamWriter(folderPath + @"\jobb" + i.ToString() + ".vtk"))
+            using (StreamWriter file =
+                        new StreamWriter(folderPath + @"\" + nameFile + i.ToString() + ".vtk"))
             {
                 foreach (var line in startText)
                 {

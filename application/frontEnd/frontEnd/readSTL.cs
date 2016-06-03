@@ -10,26 +10,28 @@ namespace frontEnd
 {
     class readSTL
     {
-        public List<List<Vector3D>> boundary { get; private set; }
+        public List<Tuple<Vector3D, List<Point3D>>> boundary { get; private set; }
 
         public readSTL(string file)
         {
-            boundary = new List<List<Vector3D>>();
+            boundary = new List<Tuple<Vector3D, List<Point3D>>>();
             BinaryReader myFile = new BinaryReader(File.Open(file, FileMode.Open));
 
             myFile.ReadChars(80);
             var tris = myFile.ReadInt32();
             for (var i = 0; i < tris; i++)
             {
-                List<Vector3D> tri = new List<Vector3D>();
-                for (var j = 0; j < 4; j++)
+                var tri = new List<Point3D>();
+                Vector3D normal = new Vector3D(myFile.ReadSingle(), myFile.ReadSingle(), myFile.ReadSingle());
+                for (var j = 1; j < 4; j++)
                 {
-                    Vector3D vec = new Vector3D(myFile.ReadSingle(), myFile.ReadSingle(), myFile.ReadSingle());
+                    Point3D vec = new Point3D(myFile.ReadSingle(), myFile.ReadSingle(), myFile.ReadSingle());
                     tri.Add(vec);
                 }
                 myFile.ReadInt16();
-                boundary.Add(tri);
-                Console.WriteLine(tri[0] + ", " + tri[1] + ", " + tri[2] + ", " + tri[3]);
+
+                boundary.Add(Tuple.Create(normal, tri));
+                Console.WriteLine(normal + ", " + tri[0] + ", " + tri[1] + ", " + tri[2]);
             }
             myFile.Close();
         }

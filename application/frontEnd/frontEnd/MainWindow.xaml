@@ -43,8 +43,8 @@
         <TextBox x:Name="length" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" Text="2500" VerticalAlignment="Top" Width="38" Margin="14,17,0,0" Grid.Row="2"/>
         <TextBox x:Name="width" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" Text="1500" VerticalAlignment="Top" Width="37" Margin="60,17,0,0" Grid.Row="2"/>
         <TextBox x:Name="height" HorizontalAlignment="Left" Height="23" Margin="103,17,0,0" Grid.Row="2" TextWrapping="Wrap" Text="700" VerticalAlignment="Top" Width="37"/>
-        <CheckBox x:Name="checkBox1" Content="Validate job" HorizontalAlignment="Left" Margin="21,3,0,0" Grid.Row="3" VerticalAlignment="Top" Width="112"/>
-        <CheckBox x:Name="checkBox2" Content="CheckBox" HorizontalAlignment="Left" Margin="21,28,0,0" Grid.Row="3" VerticalAlignment="Top" Width="112"/>
+        <CheckBox x:Name="checkBox1" Content="Validate path" HorizontalAlignment="Left" Margin="21,3,0,0" Grid.Row="3" VerticalAlignment="Top" Width="112" IsChecked="True"/>
+        <CheckBox x:Name="checkBox2" Content="Optimize path" HorizontalAlignment="Left" Margin="21,28,0,0" Grid.Row="3" VerticalAlignment="Top" Width="112" IsChecked="True"/>
 
     </Grid>
 </Window>

@@ -22,7 +22,7 @@ namespace frontEnd
         public double K { get; private set; }
         public double C { get;  private set; }
         public double mass { get; private set; }
-        public List<Point3D> newPath { get; private set; }
+        public List<Tuple<bool, Point3D>> newPath { get; private set; }
         public List<Tuple<bool, Point3D>> oldPath { get; private set; }
         public double nextAngleXY { get; private set; }
         public double nextAngleXZ { get; private set; }
@@ -40,9 +40,8 @@ namespace frontEnd
             this.mass = 5;
             C = 2 * Math.Sqrt(mass * K); //damping coefficient
 
-            newPath = new List<Point3D>();
+            newPath = new List<Tuple<bool, Point3D>>();
             oldPath = new List<Tuple<bool, Point3D>>();
-            newPath.Add(startPos);
             oldPath.Add(Tuple.Create(false, startPos));
 
             start(startPos);
